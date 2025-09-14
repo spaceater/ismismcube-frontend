@@ -1,5 +1,6 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import ismismcube from '../pages/ismismcube/ismismcube.vue'
+import aiVMZ from '../pages/ai/ai.vue'
 import NotFound from '../pages/404/404.vue'
 
 const router = createRouter({
@@ -9,6 +10,11 @@ const router = createRouter({
       path: '/',
       name: 'home',
       component: ismismcube
+    },
+    {
+      path: '/ai',
+      name: 'ai',
+      component: aiVMZ
     },
     {
       path: '/:ismTag([1-4]|[1-4]-[1-4]|[1-4]-[1-4]-[1-4]|[1-4]-[1-4]-[1-4]-[1-4])',
