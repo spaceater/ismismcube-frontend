@@ -1,17 +1,17 @@
 <template>
   <!-- 设置页面favicon -->
   <link rel="icon" type="image/x-icon" href="@/assets/ismismcube_favicon.ico" style="display: none;" />
-  <div class="ismismcube-container">
+  <div id="ismismcube-container">
     <div id="left_part">
       <div id="page_view" title="此网站的总访量">
         <img src="@/assets/page_view_icon.svg" alt="page_view">
-        <b>{{ pageView }}</b>
+        <b>{{ pageView == -1 ? '-' : pageView }}</b>
       </div>
       <div id="online_count" title="当前在线数">
         <p>在线:</p>
         <b>{{ onlineCount == -1 ? '-' : onlineCount }}</b>
       </div>
-      <div id="ai_button" @click="goToAI">AI未明子</div>
+      <div id="ai_button" @click="goToAI">AI 未明子</div>
       <div id="return_button" @click="openMoreContent">更多内容</div>
       <div id="download_button" @click="downloadIsmJson">下载文件</div>
       <input 
@@ -176,7 +176,7 @@ import { useRoute, useRouter } from 'vue-router'
 const ismData = ref<any>(null)
 const axisColor = ["red", "green", "blue", "darkorange"]
 const ismInfoFontSize = ref(1.0)
-const pageView = ref(0)
+const pageView = ref(-1)
 const onlineCount = ref(-1)
 const searchText = ref('')
 const sizeIndicatorRatio = ref(0)
@@ -231,13 +231,17 @@ const connectWebSocket = () => {
 }
 
 const disconnectWebSocket = () => {
-  // 清除重连定时器
   if (reconnectTimer) {
     clearTimeout(reconnectTimer)
     reconnectTimer = null
   }
-  
   if (socket) {
+    console.log('关闭WebSocket连接')
+    // 移除所有事件监听器，防止触发重连
+    socket.onopen = null
+    socket.onmessage = null
+    socket.onerror = null
+    socket.onclose = null
     socket.close(1000, "页面卸载")
     socket = null
   }
@@ -334,7 +338,7 @@ const pinISM = (ismTag: string) => {
 const setISMInfo = (ismTag: string) => {
   if (!ismData.value || !ismData.value[ismTag]) return
   const ismTagData = ismData.value[ismTag]
-  const ismTagfontSize = 1.2*ismInfoFontSize.value;
+  const ismTagfontSize = 1.0*ismInfoFontSize.value;
   let contentHtml = `<div style='text-align: center; font-size:${ismTagfontSize}rem;'>`
   if (ismTag.length >= 1) {
     contentHtml += `<p style='display: inline-block;width:${ismTagfontSize}rem;height:${ismTagfontSize}rem;line-height:${ismTagfontSize}rem;color:red;border:solid black ${ismTagfontSize/10}rem;'><b>${ismTag[0]}</b></p>`
@@ -376,7 +380,7 @@ const setISMInfo = (ismTag: string) => {
   }
   contentHtml += `</div>`
   content.value = contentHtml
-  
+
   if (searchText.value !== '') {
     renewInfo(searchText.value)
   }
@@ -488,7 +492,7 @@ const setIndicatorActive = () => {
 const setOverview = () => {
   document.body.style.userSelect = ""
   document.body.style.pointerEvents = ""
-  document.getElementById('size_indicator')!.style.backgroundColor = "rgb(200,200,200)"
+  document.getElementById('size_indicator')!.style.backgroundColor = ""
   window.removeEventListener("mouseup", setOverview)
   window.removeEventListener("mousemove", changeSize)
   window.removeEventListener("mouseup", closeIndicator)
@@ -520,7 +524,7 @@ const changeSize = (event: MouseEvent) => {
 const closeIndicator = () => {
   document.body.style.userSelect = ""
   document.body.style.pointerEvents = ""
-  document.getElementById('size_indicator')!.style.backgroundColor = "rgb(200,200,200)"
+  document.getElementById('size_indicator')!.style.backgroundColor = ""
   window.removeEventListener("mouseup", setOverview)
   window.removeEventListener("mousemove", changeSize)
   window.removeEventListener("mouseup", closeIndicator)
@@ -534,9 +538,7 @@ watch(() => route.params.ismTag, () => {
 // 生命周期
 onMounted(() => {
   document.documentElement.style.fontSize = Math.max(screen.width, screen.height) / 96 + "px"
-  // 先执行数据初始化，不依赖WebSocket连接
   initial()
-  // 然后尝试连接WebSocket（可选功能）
   connectWebSocket()
 })
 
@@ -562,17 +564,17 @@ onUnmounted(() => {
   font-family: "en_font", "other_font", sans-serif;
 }
 
-.ismismcube-container {
+#ismismcube-container {
   position: fixed;
   width: 100%;
   height: 100%;
-  overflow-x: auto;
-  overflow-y: hidden;
+  overflow: auto;
 }
 
 .ism {
   cursor: pointer;
 }
+
 /* 基础色 */
 .show_x,
 .show_xy,
@@ -676,7 +678,7 @@ onUnmounted(() => {
   top: 0;
   width: 40rem;
   height: 100%;
-  min-height: 30rem;
+  min-height: 40rem;
   background-color: rgb(230, 230, 230);
   box-shadow: -1rem 0 1rem 1rem black;
 }
@@ -1178,6 +1180,7 @@ onUnmounted(() => {
   width: 1rem;
   height: 4rem;
   background: rgb(200,200,200) url('@/assets/size_indicator.svg') center/contain no-repeat;
+  box-sizing: border-box;
   border: 1px solid black;
   display: flex;
   justify-content: center;
@@ -1186,6 +1189,7 @@ onUnmounted(() => {
 
 #size_indicator:hover {
   background-color: gray;
+  cursor: pointer;
 }
 
 #right_part {
@@ -1193,6 +1197,7 @@ onUnmounted(() => {
   position: absolute;
   left: 40rem;
   width: calc(100% - 40rem);
+  min-width: 30rem;
   height: 100%;
   overflow: auto;
 }
