@@ -1,6 +1,4 @@
 <template>
-  <!-- 设置页面favicon -->
-  <link rel="icon" type="image/x-icon" href="@/assets/ismismcube_favicon.ico" style="display: none;" />
   <div id="ismismcube-container">
     <div id="left_part">
       <div id="page_view" title="此网站的总访量">
@@ -338,8 +336,8 @@ const pinISM = (ismTag: string) => {
 const setISMInfo = (ismTag: string) => {
   if (!ismData.value || !ismData.value[ismTag]) return
   const ismTagData = ismData.value[ismTag]
-  const ismTagfontSize = 1.0*ismInfoFontSize.value;
-  let contentHtml = `<div style='text-align: center; font-size:${ismTagfontSize}rem;'>`
+  const ismTagfontSize = 1.1*ismInfoFontSize.value;
+  let contentHtml = `<div style='text-align: center; font-size: 1rem;'>`
   if (ismTag.length >= 1) {
     contentHtml += `<p style='display: inline-block;width:${ismTagfontSize}rem;height:${ismTagfontSize}rem;line-height:${ismTagfontSize}rem;color:red;border:solid black ${ismTagfontSize/10}rem;'><b>${ismTag[0]}</b></p>`
   }
