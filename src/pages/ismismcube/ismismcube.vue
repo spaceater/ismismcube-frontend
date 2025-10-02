@@ -12,17 +12,17 @@
       <div id="ai_button" @click="goToAI">AI 未明子</div>
       <div id="return_button" @click="openMoreContent">更多内容</div>
       <div id="download_button" @click="downloadIsmJson">下载文件</div>
-      <input 
-        id="search_input" 
-        type="text" 
+      <input
+        id="search_input"
+        type="text"
         placeholder="键入检索词"
         v-model="searchText"
       >
       <div id="ismism_main_cube">
         <div id="show_cube">
           <template v-for="x in 4" :key="`show-${x}`">
-            <div 
-              v-for="y in 4" 
+            <div
+              v-for="y in 4"
               :key="`${5-x}-${y}`"
               class="show_xy ism"
               :style="{ '--x': 5-x, '--y': y, '--a': x == 1 ? 1 : 0.5, '--b': y == 4 ? 1 : 0.5 }"
@@ -36,49 +36,49 @@
         </div>
         <div id="show_cube_name">
           <template v-for="x in 4" :key="`show-name-${x}`">
-            <div 
-              v-for="y in 4" 
+            <div
+              v-for="y in 4"
               :key="`show-name-${x}-${y}`"
               class="show_xy_name"
             >
               <p
-                class="ism_name" 
-                :class="{ no_data: ismData && ismData[`${5-x}-${y}`] && ismData[`${5-x}-${y}`].en_name === '' }" 
+                class="ism_name"
+                :class="{ no_data: ismData && ismData[`${5-x}-${y}`] && ismData[`${5-x}-${y}`].en_name === '' }"
                 :style="{ fontSize: getIsmNameFontSize(getIsmName(`${5-x}-${y}`)) }">{{ getIsmName(`${5-x}-${y}`) }}
               </p>
             </div>
           </template>
         </div>
-        <div 
-          v-for="x in 4" 
+        <div
+          v-for="x in 4"
           :key="`line-x-${x}`"
-          class="line_x" 
+          class="line_x"
           :style="{ '--x': x }"
         >
           <p>{{ x }}</p>
         </div>
-        <div 
-          v-for="y in 4" 
+        <div
+          v-for="y in 4"
           :key="`line-y-${y}`"
-          class="line_y" 
+          class="line_y"
           :style="{ '--y': y }"
         >
           <p>{{ y }}</p>
         </div>
         <div id="show_cube_x">
-          <div 
-            v-for="i in 4" 
+          <div
+            v-for="i in 4"
             :key="`${i}`"
-            class="show_x ism" 
+            class="show_x ism"
             :ism_tag="`${5-i}`"
             :class="getIsmClass(`${5-i}`)"
             @mouseenter="selectISM(`${5-i}`)"
             @mouseleave="unselectISM()"
             @click="pinISM(`${5-i}`)"
           >
-            <p 
-              class="ism_name" 
-              :class="{ no_data: ismData && ismData[`${5-i}`] && ismData[`${5-i}`].en_name === '' }" 
+            <p
+              class="ism_name"
+              :class="{ no_data: ismData && ismData[`${5-i}`] && ismData[`${5-i}`].en_name === '' }"
               :style="{ fontSize: getIsmNameFontSize(getIsmName(`${5-i}`)) }">{{ getIsmName(`${5-i}`) }}
             </p>
           </div>
@@ -99,7 +99,7 @@
         <div id="ism_info_content" v-html="content"></div>
       </div>
       <div id="size_adjuster">
-        <div 
+        <div
           id="size_indicator"
           @mousedown="setIndicatorActive"
           :style="{ top: sizeIndicatorRatio * 100 + '%' }"
@@ -107,24 +107,24 @@
         </div>
       </div>
     </div>
-  
+
     <div id="right_part">
       <div id="ismism_cube_box" :style="{ transform: `scale(${1 + sizeIndicatorRatio * 1.5})` }">
-        <div 
-          v-for="x in 4" 
+        <div
+          v-for="x in 4"
           :key="`${x}`"
-          class="ism_x" 
+          class="ism_x"
           :style="{ '--x': 4-x }"
         >
-          <div 
-            v-for="y in 4" 
+          <div
+            v-for="y in 4"
             :key="`${x}-${y}`"
             class="ism_xy"
           >
             <div id="i"></div>
             <div id="z"></div>
-            <div 
-              v-for="z in 4" 
+            <div
+              v-for="z in 4"
               :key="`${x}-${y}-${z}`"
               class="ism_xyz ism"
               :style="{ '--z': z }"
@@ -136,12 +136,12 @@
             >
               <p
                 class="ism_name"
-                :class="{ no_data: ismData && ismData[`${x}-${y}-${5-z}`] && ismData[`${x}-${y}-${5-z}`].en_name === '' }" 
+                :class="{ no_data: ismData && ismData[`${x}-${y}-${5-z}`] && ismData[`${x}-${y}-${5-z}`].en_name === '' }"
                 :style="{ fontSize: getIsmNameFontSize(getIsmName(`${x}-${y}-${5-z}`)) }">{{ getIsmName(`${x}-${y}-${5-z}`) }}
               </p>
               <div id="ism_xyz_label_column">{{ 5-z }}</div>
-              <div 
-                v-for="i in 4" 
+              <div
+                v-for="i in 4"
                 :key="`${x}-${y}-${5-z}-${i}`"
                 class="ism_xyzi ism"
                 :style="{ '--i': i }"
@@ -151,9 +151,9 @@
                 @mouseout.stop="unselectISM()"
                 @click.stop="pinISM(`${x}-${y}-${5-z}-${5-i}`)"
               >
-                <p 
-                  class="ism_name" 
-                  :class="{ no_data: ismData && ismData[`${x}-${y}-${5-z}-${5-i}`] && ismData[`${x}-${y}-${5-z}-${5-i}`].en_name === '' }" 
+                <p
+                  class="ism_name"
+                  :class="{ no_data: ismData && ismData[`${x}-${y}-${5-z}-${5-i}`] && ismData[`${x}-${y}-${5-z}-${5-i}`].en_name === '' }"
                   :style="{ fontSize: getIsmNameFontSize(getIsmName(`${x}-${y}-${5-z}-${5-i}`)) }">{{ getIsmName(`${x}-${y}-${5-z}-${5-i}`) }}
                 </p>
                 <div id="ism_xyz_label_row">{{ 5-i }}</div>
@@ -201,11 +201,18 @@ const connectWebSocket = () => {
       }
     })
     socket.addEventListener("message", (event) => {
-      try {
-        const data = JSON.parse(event.data)
-        onlineCount.value = data.online_count
-      } catch (error) {
-        console.error("WebSocket消息解析失败:", error)
+      const message = event.data
+      if (message.startsWith('broadcast:')) {
+        try {
+          const data = JSON.parse(message.substring('broadcast:'.length))
+          if (data.online !== undefined) {
+            onlineCount.value = data.online
+          }
+        } catch (error) {
+          console.error("WebSocket消息解析失败:", message, error)
+        }
+      } else {
+        console.error("WebSocket消息解析失败:", message)
       }
     })
     socket.addEventListener("error", (error) => {
@@ -214,7 +221,6 @@ const connectWebSocket = () => {
     socket.addEventListener("close", (event) => {
       console.log("WebSocket连接关闭:", event.code, event.reason)
       if (event.code !== 1000) {
-        console.log("3秒后尝试重连WebSocket")
         reconnectTimer = setTimeout(() => {
           connectWebSocket()
         }, 3000)
@@ -541,6 +547,7 @@ onMounted(() => {
 })
 
 onUnmounted(() => {
+  document.documentElement.style.fontSize = ""
   disconnectWebSocket()
 })
 </script>
@@ -898,7 +905,7 @@ onUnmounted(() => {
   align-items: center;
 }
 
-.line_x {    
+.line_x {
   position: absolute;
   left: 10rem;
   top: calc(12rem - calc(var(--x)*3rem));
@@ -914,7 +921,7 @@ onUnmounted(() => {
   border-bottom: none;
 }
 
-.line_x p {    
+.line_x p {
   position: relative;
   left:12.5rem;
   height: 3rem;
@@ -949,7 +956,7 @@ onUnmounted(() => {
 }
 
 #show_cube_x {
-  position: absolute;   
+  position: absolute;
   left: calc(20rem - 1px);
   top: 6.5rem;
   transform: skewY(30deg);
@@ -1367,7 +1374,7 @@ onUnmounted(() => {
   display: flex;
   align-items: center;
 }
-</style> 
+</style>
 
 <style module>
 a {
