@@ -202,14 +202,14 @@ const connectWebSocket = () => {
     })
     socket.addEventListener("message", (event) => {
       const message = event.data
-      if (message.startsWith('broadcast:')) {
+      if (message.startsWith('broadcast')) {
         try {
-          const data = JSON.parse(message.substring('broadcast:'.length))
+          const data = JSON.parse(message.substring(message.indexOf('{')))
           if (data.online !== undefined) {
             onlineCount.value = data.online
           }
         } catch (error) {
-          console.error("WebSocket消息解析失败:", message, error)
+          console.error("WebSocket JSON解析失败:", message, error)
         }
       } else {
         console.error("WebSocket消息解析失败:", message)
