@@ -44,9 +44,9 @@ const props = withDefaults(defineProps<Props>(), {
   disabled: false,
   readonly: false,
   minWidth: '0px',
-  maxWidth: '500px',
+  maxWidth: '100%',
   minHeight: '0px',
-  maxHeight: '200px'
+  maxHeight: '100%'
 })
 
 const emit = defineEmits<Emits>()
@@ -86,9 +86,13 @@ const getMeasureCanvas = (): CanvasRenderingContext2D => {
 }
 
 // 将任意 CSS 长度转换为像素，复用单一测量元素以降低开销
-let measureEl: HTMLDivElement | null = null
-const ensureMeasureEl = (): HTMLDivElement => {
-  if (measureEl) return measureEl
+let measureDiv: HTMLDivElement | null = null
+const getMeasureDiv = (container: HTMLElement): HTMLDivElement => {
+  if (measureDiv && measureDiv.parentElement === container) return measureDiv
+  if (measureDiv && measureDiv.parentNode) {
+    measureDiv.parentNode.removeChild(measureDiv)
+    measureDiv = null
+  }
   const el = document.createElement('div')
   el.style.position = 'absolute'
   el.style.visibility = 'hidden'
@@ -98,17 +102,19 @@ const ensureMeasureEl = (): HTMLDivElement => {
   el.style.border = '0'
   el.style.padding = '0'
   el.style.margin = '0'
-  document.body.appendChild(el)
-  measureEl = el
+  container.appendChild(el)
+  measureDiv = el
   return el
 }
 
-const toPx = (val: string): number => {
+const toPx = (val: string, container: HTMLElement): number => {
   if (!val) return 0
   if (val.endsWith('px')) return parseFloat(val)
-  const el = ensureMeasureEl()
+  const el = getMeasureDiv(container)
   el.style.width = val
-  return el.getBoundingClientRect().width
+  const width = el.getBoundingClientRect().width
+  el.style.height = '0'
+  return width
 }
 
 const resizeTextarea = () => {
@@ -120,22 +126,24 @@ const resizeTextarea = () => {
   measureCanvas.font = textareaStyle.font
   const raw = (textarea.value || textarea.placeholder || '').split('\n')
   let maxLineWidth = 0
-  const horizontalPadding = parseFloat(textareaStyle.paddingLeft) + parseFloat(textareaStyle.paddingRight)
+  // const horizontalPadding = parseFloat(textareaStyle.paddingLeft) + parseFloat(textareaStyle.paddingRight)
   for (const line of raw) {
     const lineWidth = measureCanvas.measureText(line || ' ').width
-    maxLineWidth = Math.max(maxLineWidth, lineWidth + horizontalPadding)
+    // maxLineWidth = Math.max(maxLineWidth, lineWidth + horizontalPadding)
+    maxLineWidth = Math.max(maxLineWidth, lineWidth)
   }
-  const minWidth = toPx(props.minWidth)
-  const maxWidth = toPx(props.maxWidth)
-  const newWidth = Math.min(Math.max(Math.ceil(maxLineWidth), minWidth), maxWidth)
+  const container = textarea.parentElement || document.body
+  const minWidth = toPx(props.minWidth, container)
+  const maxWidth = toPx(props.maxWidth, container)
+  const newWidth = Math.min(Math.max(maxLineWidth, minWidth), maxWidth)
   textarea.style.width = `${newWidth}px`
   // 计算高度
-  const minHeight = toPx(props.minHeight)
-  const maxHeight = toPx(props.maxHeight)
+  const minHeight = toPx(props.minHeight, container)
+  const maxHeight = toPx(props.maxHeight, container)
   textarea.style.height = 'auto'
   const verticalPadding = parseFloat(textareaStyle.paddingTop) + parseFloat(textareaStyle.paddingBottom)
   const contentHeight = Math.max(0, textarea.scrollHeight - verticalPadding)
-  let newHeight = Math.max(Math.ceil(contentHeight), minHeight)
+  let newHeight = Math.max(contentHeight, minHeight)
   if (newHeight > maxHeight) {
     newHeight = maxHeight
     textarea.style.overflowY = 'auto'
@@ -167,9 +175,9 @@ onMounted(() => {
 
 onUnmounted(() => {
   if (resizeRafId !== null) cancelAnimationFrame(resizeRafId)
-  if (measureEl && measureEl.parentNode) {
-    measureEl.parentNode.removeChild(measureEl)
-    measureEl = null
+  if (measureDiv && measureDiv.parentNode) {
+    measureDiv.parentNode.removeChild(measureDiv)
+    measureDiv = null
   }
 })
 </script>
@@ -178,8 +186,6 @@ onUnmounted(() => {
 .adaptive-textarea {
   border: none;
   resize: none;
-  outline: none;
-  background-color: transparent;
   overflow: hidden;
   font: inherit;
 }
