@@ -160,35 +160,94 @@
         <div id="settings-content">
           <div class="setting-item system-prompt-item">
             <label>系统提示词 (System Prompt):</label>
-            <div class="system-prompt-display">{{ chatConfig.system_prompt || '未设置系统提示词' }}</div>
+            <textarea
+              v-model="tempChatConfig.prompt"
+              class="system-prompt-input"
+              placeholder="输入系统提示词..."
+            ></textarea>
           </div>
           <div class="setting-item">
             <label>最大上下文Token记忆长度 (Context Size):</label>
-            <span class="setting-value">{{ chatConfig.max_prompt_content }}</span>
+            <span class="setting-value readonly-value">{{ serverChatConfig.content_size }}</span>
           </div>
           <div class="setting-item">
-            <label>最大生成Token数量 (Predict):</label>
-            <span class="setting-value">{{ chatConfig.max_tokens_to_predicted }}</span>
+            <label>最大生成Token数量 (Number Predict):</label>
+            <span class="setting-value readonly-value">{{ serverChatConfig.max_tokens }}</span>
           </div>
           <div class="setting-item">
             <label>温度 (Temperature):</label>
-            <span class="setting-value">{{ chatConfig.temperature }}</span>
+            <div class="slider-container">
+              <input
+                type="range"
+                v-model.number="tempChatConfig.temperature"
+                min="0"
+                max="1"
+                step="0.01"
+                class="slider"
+              />
+              <span class="setting-value">{{ tempChatConfig.temperature.toFixed(2) }}</span>
+            </div>
           </div>
           <div class="setting-item">
             <label>Top-p采样 (Top-p Sampling):</label>
-            <span class="setting-value">{{ chatConfig.top_p }}</span>
+            <div class="slider-container">
+              <input
+                type="range"
+                v-model.number="tempChatConfig.top_p"
+                min="0"
+                max="1"
+                step="0.01"
+                class="slider"
+              />
+              <span class="setting-value">{{ tempChatConfig.top_p.toFixed(2) }}</span>
+            </div>
           </div>
           <div class="setting-item">
             <label>频率惩罚 (Frequency Penalty):</label>
-            <span class="setting-value">{{ chatConfig.frequency_penalty }}</span>
+            <div class="slider-container">
+              <input
+                type="range"
+                v-model.number="tempChatConfig.frequency_penalty"
+                min="-2"
+                max="2"
+                step="0.01"
+                class="slider"
+              />
+              <span class="setting-value">{{ tempChatConfig.frequency_penalty.toFixed(2) }}</span>
+            </div>
           </div>
           <div class="setting-item">
             <label>存在惩罚 (Presence Penalty):</label>
-            <span class="setting-value">{{ chatConfig.presence_penalty }}</span>
+            <div class="slider-container">
+              <input
+                type="range"
+                v-model.number="tempChatConfig.presence_penalty"
+                min="-2"
+                max="2"
+                step="0.01"
+                class="slider"
+              />
+              <span class="setting-value">{{ tempChatConfig.presence_penalty.toFixed(2) }}</span>
+            </div>
           </div>
           <div class="setting-item">
             <label>重复惩罚 (Repeat Penalty):</label>
-            <span class="setting-value">{{ chatConfig.repeat_penalty }}</span>
+            <div class="slider-container">
+              <input
+                type="range"
+                v-model.number="tempChatConfig.repeat_penalty"
+                min="0"
+                max="2"
+                step="0.01"
+                class="slider"
+              />
+              <span class="setting-value">{{ tempChatConfig.repeat_penalty.toFixed(2) }}</span>
+            </div>
+          </div>
+          <div class="settings-actions">
+            <button class="settings-button reset" @click="resetSettings">恢复</button>
+            <button class="settings-button cancel" @click="closeSettingsModal">取消</button>
+            <button class="settings-button save" @click="saveSettings">保存</button>
           </div>
         </div>
       </div>
@@ -207,9 +266,9 @@ interface ServerConfig {
 }
 
 interface ChatConfig {
-  system_prompt: string
-  max_prompt_content: number
-  max_tokens_to_predicted: number
+  prompt: string
+  content_size: number
+  max_tokens: number
   temperature: number
   top_p: number
   frequency_penalty: number
@@ -224,10 +283,20 @@ const serverConfig = ref<ServerConfig>({
   available_models: [],
   max_concurrent_tasks: 0
 })
-const chatConfig = ref<ChatConfig>({
-  system_prompt: '',
-  max_prompt_content: 0,
-  max_tokens_to_predicted: 0,
+const serverChatConfig = ref<ChatConfig>({
+  prompt: '',
+  content_size: 0,
+  max_tokens: 0,
+  temperature: 0,
+  top_p: 0,
+  frequency_penalty: 0,
+  presence_penalty: 0,
+  repeat_penalty: 0
+})
+const userChatConfig = ref<ChatConfig>({
+  prompt: '',
+  content_size: 0,
+  max_tokens: 0,
   temperature: 0,
   top_p: 0,
   frequency_penalty: 0,
@@ -250,6 +319,16 @@ const tokenCount = ref(0)
 const tokenSpeedStartTime = ref<number | null>(null)
 const tokenSpeed = ref(0.0)
 const showSettingsModal = ref(false)
+const tempChatConfig = ref<ChatConfig>({
+  prompt: '',
+  content_size: 0,
+  max_tokens: 0,
+  temperature: 0,
+  top_p: 0,
+  frequency_penalty: 0,
+  presence_penalty: 0,
+  repeat_penalty: 0
+})
 let broadcastSocket: WebSocket | null = null
 let broadcastReconnectTimer: number | null = null
 let taskSocket: WebSocket | null = null
@@ -269,10 +348,27 @@ const openMoreContent = () => {
 }
 
 const openSettingsModal = () => {
+  tempChatConfig.value = { ...userChatConfig.value }
   showSettingsModal.value = true
 }
 
+const resetSettings = () => {
+  userChatConfig.value = { ...serverChatConfig.value }
+  tempChatConfig.value = { ...serverChatConfig.value }
+}
+
 const closeSettingsModal = () => {
+  tempChatConfig.value = { ...userChatConfig.value }
+  showSettingsModal.value = false
+}
+
+const saveSettings = () => {
+  userChatConfig.value.prompt = tempChatConfig.value.prompt
+  userChatConfig.value.temperature = tempChatConfig.value.temperature
+  userChatConfig.value.top_p = tempChatConfig.value.top_p
+  userChatConfig.value.frequency_penalty = tempChatConfig.value.frequency_penalty
+  userChatConfig.value.presence_penalty = tempChatConfig.value.presence_penalty
+  userChatConfig.value.repeat_penalty = tempChatConfig.value.repeat_penalty
   showSettingsModal.value = false
 }
 
@@ -415,30 +511,31 @@ const connectBroadcastSocket = () => {
       else if (message.startsWith('chat-config')) {
         try {
           const data = JSON.parse(message.substring(message.indexOf('{')))
-          if (data.system_prompt !== undefined) {
-            chatConfig.value.system_prompt = data.system_prompt
+          if (data.prompt !== undefined) {
+            serverChatConfig.value.prompt = data.prompt
           }
-          if (data.max_prompt_content !== undefined) {
-            chatConfig.value.max_prompt_content = data.max_prompt_content
+          if (data.content_size !== undefined) {
+            serverChatConfig.value.content_size = data.content_size
           }
-          if (data.max_tokens_to_predicted !== undefined) {
-            chatConfig.value.max_tokens_to_predicted = data.max_tokens_to_predicted
+          if (data.max_tokens !== undefined) {
+            serverChatConfig.value.max_tokens = data.max_tokens
           }
           if (data.temperature !== undefined) {
-            chatConfig.value.temperature = data.temperature
+            serverChatConfig.value.temperature = data.temperature
           }
           if (data.top_p !== undefined) {
-            chatConfig.value.top_p = data.top_p
+            serverChatConfig.value.top_p = data.top_p
           }
           if (data.frequency_penalty !== undefined) {
-            chatConfig.value.frequency_penalty = data.frequency_penalty
+            serverChatConfig.value.frequency_penalty = data.frequency_penalty
           }
           if (data.presence_penalty !== undefined) {
-            chatConfig.value.presence_penalty = data.presence_penalty
+            serverChatConfig.value.presence_penalty = data.presence_penalty
           }
           if (data.repeat_penalty !== undefined) {
-            chatConfig.value.repeat_penalty = data.repeat_penalty
+            serverChatConfig.value.repeat_penalty = data.repeat_penalty
           }
+          userChatConfig.value = { ...serverChatConfig.value }
         } catch (error) {
           console.error("WebSocket JSON解析失败:", message, error)
         }
@@ -547,8 +644,8 @@ const connectTaskSocket = (websocketId: string) => {
                 if (lastMessage && lastMessage.role === 'assistant') {
                   lastMessage.content += choice.delta.content.replace(/\n{2,}/g, '\n')
                   updateTokenSpeed()
-                  if (tokenCount.value >= chatConfig.value.max_tokens_to_predicted-1) {
-                    lastMessage.content += '\n\n!!!【最大生成token数量: ' + chatConfig.value.max_tokens_to_predicted + '，当前生成内容的长度已经达到最大生成token数量限制】!!!'
+                  if (tokenCount.value >= serverChatConfig.value.max_tokens-1) {
+                    lastMessage.content += '\n\n!!!【最大生成token数量: ' + serverChatConfig.value.max_tokens + '，当前生成内容的长度已经达到最大生成token数量限制】!!!'
                   }
                 }
               }
@@ -659,8 +756,18 @@ const callAI = async () => {
         'Content-Type': 'application/json'
       },
       body: JSON.stringify({
-        messages: history.value,
-        system: chatConfig.value.system_prompt,
+        messages: [
+          ...(userChatConfig.value.prompt ? [{
+            role: 'system',
+            content: userChatConfig.value.prompt
+          }] : []),
+          ...history.value
+        ],
+        temperature: userChatConfig.value.temperature,
+        top_p: userChatConfig.value.top_p,
+        frequency_penalty: userChatConfig.value.frequency_penalty,
+        presence_penalty: userChatConfig.value.presence_penalty,
+        repeat_penalty: userChatConfig.value.repeat_penalty,
         stream: true
       })
     })
@@ -1317,7 +1424,6 @@ onUnmounted(() => {
   align-items: center;
   padding: 0.5rem 0;
   border-bottom: 1px solid rgb(230, 230, 230);
-
 }
 
 .setting-item:last-child {
@@ -1338,6 +1444,9 @@ onUnmounted(() => {
   text-align: center;
 }
 
+.setting-value.readonly-value {
+  color: black;
+}
 .system-prompt-item {
   flex-direction: column;
 }
@@ -1347,17 +1456,122 @@ onUnmounted(() => {
   align-self: flex-start;
 }
 
-.system-prompt-display {
+.system-prompt-input {
+  width: 100%;
+  min-height: 6rem;
   padding: 0.5rem;
   background-color: rgb(250, 250, 250);
   border-radius: 0.5rem;
   font-size: 0.8rem;
   white-space: pre-wrap;
   word-wrap: break-word;
-  max-height: 8rem;
-  overflow-y: auto;
+  resize: vertical;
   box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.1);
   box-sizing: border-box;
+  transition: border-color 0.2s ease;
+}
+
+.slider-container {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex: 1;
+  min-width: 0;
+}
+
+.slider {
+  flex: 1;
+  height: 0.5rem;
+  border-radius: 0.25rem;
+  background: rgb(230, 230, 230);
+  outline: none;
+  cursor: pointer;
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+.slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 1rem;
+  height: 1rem;
+  border-radius: 50%;
+  background: green;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.slider::-webkit-slider-thumb:hover {
+  background: darkgreen;
+  transform: scale(1.2);
+}
+
+.slider::-moz-range-thumb {
+  width: 1rem;
+  height: 1rem;
+  border-radius: 50%;
+  background: green;
+  cursor: pointer;
+  border: none;
+  transition: all 0.2s ease;
+}
+
+.slider::-moz-range-thumb:hover {
+  background: darkgreen;
+  transform: scale(1.2);
+}
+
+.settings-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.5rem;
+  padding: 1rem 0 0.5rem 0;
+  border-top: 1px solid rgb(230, 230, 230);
+  margin-top: 0.5rem;
+}
+
+.settings-button {
+  padding: 0.5rem 1.5rem;
+  font-size: 0.9rem;
+  font-weight: bold;
+  border: none;
+  border-radius: 0.5rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0.2rem 0.2rem 0.3rem rgba(0, 0, 0, 0.3);
+}
+
+.settings-button.reset {
+  background-color: rgb(255, 30, 30);
+  color: white;
+}
+
+.settings-button.reset:hover {
+  background-color: darkred;
+  transform: translateY(-2px);
+  box-shadow: 0.4rem 0.4rem 0.3rem rgba(0, 0, 0, 0.3);
+}
+
+.settings-button.cancel {
+  background-color: rgb(200, 200, 200);
+  color: black;
+}
+
+.settings-button.cancel:hover {
+  background-color: gray;
+  transform: translateY(-2px);
+  box-shadow: 0.4rem 0.4rem 0.3rem rgba(0, 0, 0, 0.3);
+}
+
+.settings-button.save {
+  background-color: green;
+  color: white;
+}
+
+.settings-button.save:hover {
+  background-color: darkgreen;
+  transform: translateY(-2px);
+  box-shadow: 0.4rem 0.4rem 0.3rem rgba(0, 0, 0, 0.3);
 }
 
 </style>
