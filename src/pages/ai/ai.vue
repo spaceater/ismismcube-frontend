@@ -703,6 +703,7 @@ const fetchExecutedTaskCount = async () => {
 }
 
 onMounted(() => {
+  document.title = 'AI-VMZ对话体验'
   connectBroadcastSocket()
   fetchExecutedTaskCount()
 })
@@ -738,13 +739,12 @@ onUnmounted(() => {
 
 #ai-container {
   position: fixed;
-  width: 100%;
-  height: 100%;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
   background-color: rgb(100, 100, 100);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 1rem 5rem;
+  padding: 1rem 4rem;
   box-sizing: border-box;
   overflow: auto;
 }
@@ -755,9 +755,19 @@ onUnmounted(() => {
   height: 100%;
   min-width: 50rem;
   min-height: 30rem;
+  margin: auto;
   border-radius: 1rem;
   display: flex;
   overflow: hidden;
+}
+
+@media (orientation: portrait) {
+  #ai-container {
+    padding: 0;
+  }
+  #main-container{
+    border-radius: 0;
+  }
 }
 
 #control-panel {
