@@ -58,7 +58,12 @@
                   <div class="model-item">-</div>
                 </template>
                 <template v-else>
-                  <div v-for="model in serverConfig.available_models" :key="model" class="model-item">
+                  <div v-for="model in serverConfig.available_models"
+                    :key="model"
+                    class="model-item"
+                    :class="{ selected: selectedModel == model }"
+                    @click="selectModel(model)"
+                  >
                     {{ model }}
                   </div>
                 </template>
@@ -68,9 +73,9 @@
         </div>
         <div class="divider-line"></div>
         <div id="introduction-area">
-          <div class="intro-item">本网站提供AI对话服务，你可以在右侧的输入栏中输入问题并点击发送按钮，发起一个对话任务。</div>
+          <div class="intro-item">本网站提供AI对话服务，你可以在左侧选择模型，在右侧的输入栏中输入问题并点击发送按钮，发起一个对话任务。</div>
           <div class="intro-item">本网站最多支持<span class="highlight-number">{{ serverConfig.max_concurrent_tasks == 0 ? '-' : serverConfig.max_concurrent_tasks }}</span>个对话任务同时运行。如果当前运行中的对话数量小于<span class="highlight-number">{{ serverConfig.max_concurrent_tasks == 0 ? '-' : serverConfig.max_concurrent_tasks }}</span>，你的对话任务会立刻开始运行，回答会生成在右侧的对话框内。</div>
-          <div class="intro-item">如果当前运行中的对话数量等于<span class="highlight-number">{{ serverConfig.max_concurrent_tasks == 0 ? '-' : serverConfig.max_concurrent_tasks }}</span>，你发起的对话任务会进入排队状态，排队进度会实时显示在左侧的对话任务状态栏中。</div>
+          <div class="intro-item">如果当前运行中的对话数量已经达到<span class="highlight-number">{{ serverConfig.max_concurrent_tasks == 0 ? '-' : serverConfig.max_concurrent_tasks }}</span>个，你发起的对话任务会进入排队状态，排队进度会实时显示在左侧的对话任务状态栏中。</div>
           <div class="intro-item">当前排队中和运行中的对话数可以在左侧的服务器状态栏查看。</div>
           <div class="intro-item">当你的对话任务正在排队或运行时，你不能发起新的对话。</div>
         </div>
@@ -84,6 +89,12 @@
           <div class="intro-item">本网站仅作学习探讨之用，请自行辨别回复内容的正确性。</div>
           <div class="intro-item">本网站制作者、模型训练者以及任何相关个人或组织不对回复的内容承担任何责任。</div>
         </div>
+        <div class="divider-line"></div>
+        <div id="contact-area">
+          <div>对本网站有任何改进意见</div>
+          <div>请联系本网站制作者B站账号</div>
+          <div><a href='https://b23.tv/JACBxVp' target='_blank'>https://b23.tv/JACBxVp</a></div>
+        </div>
       </div>
       <div id="message-panel">
         <div id="message-area" ref="messageAreaRef">
@@ -91,38 +102,42 @@
             <div class="content assistant">你好，我是AI助手，有什么可以帮助你的吗？</div>
           </div>
           <div v-for="(msg, i) in history" :key="i" class="message" :class="[msg.role, { 'faded': editingIndex !== -1 && i > editingIndex }]">
-            <div v-if="editingIndex !== i"
-              class="content"
-              :class="msg.role"
-            >{{ msg.content }}</div>
-            <AdaptiveTextarea v-else
-              v-model="editingContent"
-              class="content editing"
-              :class="msg.role"
-              max-width="calc(100% - 3rem)"
-              @keydown.enter.prevent="confirmEditing"
-              @keydown.escape.prevent="exitEditing"
-              @vue:mounted="(vnode: any) => selectAndFocus(vnode)"
-              ref="editingElement"
-            />
-            <template v-if="msg.role === 'user' && taskStatus === 'none'">
-              <div v-if="editingIndex !== i" class="edit-icon" @click="startEdit(i)" title="编辑此消息">
-                <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <path d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L10.582 16.07a4.5 4.5 0 0 1-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 0 1 1.13-1.897l8.932-8.931Zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0 1 15.75 21H5.25A2.25 2.25 0 0 1 3 18.75V8.25A2.25 2.25 0 0 1 5.25 6H10" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                </svg>
-              </div>
-              <div v-else class="edit-buttons">
-                <div class="edit-button cancel-button" @click="exitEditing" title="取消">
+            <template v-if="msg.role === 'user'">
+              <AdaptiveTextarea v-if="editingIndex === i"
+                v-model="editingContent"
+                class="content user editing"
+                max-width="calc(100% - 3rem)"
+                @keydown.enter.prevent="confirmEditing"
+                @keydown.escape.prevent="exitEditing"
+                @vue:mounted="(vnode: any) => selectAndFocus(vnode)"
+                ref="editingElement"
+              />
+              <div v-else
+                class="content user"
+              >{{ msg.content }}</div>
+              <template v-if="taskStatus === 'none'">
+                <div v-if="editingIndex !== i" class="edit-icon" @click="startEdit(i)" title="编辑此消息">
                   <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <path d="M18 6L6 18M6 6l12 12" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    <path d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L10.582 16.07a4.5 4.5 0 0 1-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 0 1 1.13-1.897l8.932-8.931Zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0 1 15.75 21H5.25A2.25 2.25 0 0 1 3 18.75V8.25A2.25 2.25 0 0 1 5.25 6H10" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
                   </svg>
                 </div>
-                <div class="edit-button confirm-button" @click="confirmEditing" title="确认">
-                  <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <path d="M20 6L9 17l-5-5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                  </svg>
+                <div v-else class="edit-buttons">
+                  <div class="edit-button cancel-button" @click="exitEditing" title="取消">
+                    <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                      <path d="M18 6L6 18M6 6l12 12" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                  </div>
+                  <div class="edit-button confirm-button" @click="confirmEditing" title="确认">
+                    <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                      <path d="M20 6L9 17l-5-5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                  </div>
                 </div>
-              </div>
+              </template>
+            </template>
+            <template v-else>
+              <div class="model-label">{{ msg.role }}</div>
+              <div class="content assistant">{{ msg.content }}</div>
             </template>
           </div>
         </div>
@@ -134,7 +149,7 @@
             min-height="3rem"
             max-height="10rem"
             :placeholder="isWebSocketConnected ? '输入你的问题...' : '等待服务器连接...'"
-            :disabled="!isWebSocketConnected || taskStatus !== 'none' || editingIndex !== -1"
+            :disabled="editingIndex !== -1"
             ref="inputRef"
           />
           <div id="send-stop-button" @click="handleSendOrStop" :class="{ disabled: !isWebSocketConnected || editingIndex !== -1, send: taskStatus === 'none', stop: taskStatus !== 'none' }">{{ taskStatus === 'none' ? '发送' : '停止' }}</div>
@@ -283,6 +298,7 @@ const serverConfig = ref<ServerConfig>({
   available_models: [],
   max_concurrent_tasks: 0
 })
+const selectedModel = ref<string>('')
 const serverChatConfig = ref<ChatConfig>({
   prompt: '',
   content_size: 0,
@@ -303,7 +319,7 @@ const userChatConfig = ref<ChatConfig>({
   presence_penalty: 0,
   repeat_penalty: 0
 })
-const history = ref<Array<{ role: 'user' | 'assistant', content: string }>>([])
+const history = ref<Array<{ role: string, content: string }>>([])
 const messageAreaRef = ref<HTMLDivElement>()
 const inputText = ref('')
 const inputRef = ref<HTMLTextAreaElement>()
@@ -345,6 +361,10 @@ const goIsmismcube = () => router.push('/')
 
 const openMoreContent = () => {
   window.open("https://www.maybered.com", "_blank")
+}
+
+const selectModel = (model: string) => {
+  selectedModel.value = model
 }
 
 const openSettingsModal = () => {
@@ -423,10 +443,11 @@ const saveChat = () => {
     filename = cleanText.length > 20 ? cleanText.substring(0, 20) + '....txt' : cleanText + '.txt'
   }
   const currentUrl = window.location.href
-  const modelInfo = serverConfig.value.available_models.length > 0 ? serverConfig.value.available_models.join(', ') : '未知模型'
   let content = `[AI对话记录]\n`
   content += `网址: ${currentUrl}\n`
-  content += `模型: ${modelInfo}\n`
+  const usedModels = [...new Set(history.value.filter(msg => msg.role !== 'user').map(msg => msg.role))]
+  const modelInfo = usedModels.length > 0 ? usedModels.join(', ') : '未知模型'
+  content += `模型: [${modelInfo}]\n`
   content += `保存时间: ${now.toLocaleString('zh-CN')}\n`
   content += `对话条数: ${history.value.length}\n`
   content += `--------------------------------\n`
@@ -500,6 +521,9 @@ const connectBroadcastSocket = () => {
           const data = JSON.parse(message.substring(message.indexOf('{')))
           if (data.available_models !== undefined) {
             serverConfig.value.available_models = data.available_models
+            if (data.available_models.length > 0 && !selectedModel.value) {
+              selectedModel.value = data.available_models[0]
+            }
           }
           if (data.max_concurrent_tasks !== undefined) {
             serverConfig.value.max_concurrent_tasks = data.max_concurrent_tasks
@@ -611,11 +635,12 @@ const connectTaskSocket = (websocketId: string) => {
           try {
             const data = JSON.parse(message.substring(message.indexOf('{')))
             if (data.queue_position !== undefined) {
-              queuePosition.value = data.queue_position
+              if (queuePosition.value > data.queue_position) {
+                queuePosition.value = data.queue_position
+              }
               if (data.queue_position == -1) {
                 taskStatus.value = 'running'
-              }
-              else {
+              } else {
                 taskStatus.value = 'queue'
               }
             }
@@ -641,7 +666,7 @@ const connectTaskSocket = (websocketId: string) => {
               }
               if (choice.delta && choice.delta.content) {
                 const lastMessage = history.value[history.value.length - 1]
-                if (lastMessage && lastMessage.role === 'assistant') {
+                if (lastMessage && lastMessage.role !== 'user') {
                   lastMessage.content += choice.delta.content.replace(/\n{2,}/g, '\n')
                   updateTokenSpeed()
                   if (tokenCount.value >= serverChatConfig.value.max_tokens-1) {
@@ -652,11 +677,11 @@ const connectTaskSocket = (websocketId: string) => {
             }
           } catch(error) {
             const lastMessage = history.value[history.value.length - 1]
-            if (lastMessage && lastMessage.role === 'assistant') {
+            if (lastMessage && lastMessage.role !== 'user') {
               lastMessage.content = `服务器错误：${event.data}`
             } else {
               history.value.push({
-                role: 'assistant',
+                role: selectedModel.value || 'assistant',
                 content: `服务器错误：${event.data}`
               })
             }
@@ -709,7 +734,6 @@ const disconnectTaskSocket = () => {
     taskSocket.onclose = null
     taskSocket = null
   }
-
   // 重置排队位置和任务状态
   queuePosition.value = -1
   taskStatus.value = 'none'
@@ -756,12 +780,16 @@ const callAI = async () => {
         'Content-Type': 'application/json'
       },
       body: JSON.stringify({
+        ...(selectedModel.value ? { model: selectedModel.value } : {}),
         messages: [
           ...(userChatConfig.value.prompt ? [{
             role: 'system',
             content: userChatConfig.value.prompt
           }] : []),
-          ...history.value
+          ...history.value.map(msg => ({
+            role: msg.role === 'user' ? 'user' : 'assistant',
+            content: msg.content
+          }))
         ],
         temperature: userChatConfig.value.temperature,
         top_p: userChatConfig.value.top_p,
@@ -779,13 +807,13 @@ const callAI = async () => {
     if (!websocketId) {
       throw new Error('未获取到websocket_id')
     }
-    const streamMessage = reactive({ role: 'assistant' as const, content: '' })
+    const streamMessage = reactive({ role: selectedModel.value || 'assistant', content: '' })
     history.value.push(streamMessage)
     connectTaskSocket(websocketId)
   } catch (error) {
     console.error('AI Error:', error)
     history.value.push({
-      role: 'assistant',
+      role: selectedModel.value || 'assistant',
       content: '抱歉，AI服务暂时不可用，请稍后重试。'
     })
     taskStatus.value = 'none'
@@ -1065,18 +1093,51 @@ onUnmounted(() => {
 
 #models-list {
   margin: 0.2rem 1rem;
+  padding: 0.2rem 0;
   background-color: white;
   border-radius: 0.2rem;
   font-weight: bold;
+  overflow: hidden;
 }
 
 .model-item {
-  line-height: 1.5rem;
+  position: relative;
+  margin: 0 auto;
+  padding: 0.2rem;
   white-space: nowrap;
-  overflow: hidden;
   display: flex;
   align-items: center;
   justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.model-item:hover {
+  background-color: rgb(200, 200, 200);
+}
+
+.model-item.selected {
+  width: fit-content;
+  border-radius: 0.2rem;
+  color: white;
+  animation: blink 1s ease-in-out infinite;
+}
+
+@keyframes blink {
+  0%, 100% {
+    background-color: green;
+  }
+  50% {
+    background-color: rgba(0, 128, 0, 0.5);
+  }
+}
+
+.model-item.selected::after {
+  content: '✔';
+  position: absolute;
+  right: -1rem;
+  color: green;
+  font-size: 1rem;
 }
 
 #introduction-area, #notice-area, #warning-area {
@@ -1084,7 +1145,6 @@ onUnmounted(() => {
   font-size: 0.8rem;
   text-indent: 1em;
   text-align: justify;
-  overflow-y: auto;
 }
 
 #notice-area {
@@ -1109,6 +1169,13 @@ onUnmounted(() => {
   position: absolute;
   left: -0.5rem;
   font-weight: bold;
+}
+
+#contact-area {
+  padding: 0 1rem;
+  font-size: 0.8rem;
+  text-align: center;
+  font-style: italic;
 }
 
 #message-panel {
@@ -1163,6 +1230,14 @@ onUnmounted(() => {
 
 .content.assistant {
   border-bottom-left-radius: 0.25rem;
+}
+
+.model-label{
+  position: absolute;
+  font-size: 0.7rem;
+  color: gray;
+  top: -1rem;
+  left: 1rem;
 }
 
 .content.user {
@@ -1575,4 +1650,3 @@ onUnmounted(() => {
 }
 
 </style>
-

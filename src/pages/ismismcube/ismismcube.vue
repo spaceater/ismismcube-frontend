@@ -486,6 +486,7 @@ const goToAI = () => {
 const setIndicatorActive = () => {
   document.body.style.userSelect = "none"
   document.body.style.pointerEvents = "none"
+  document.documentElement.style.cursor = "pointer"
   document.getElementById('size_indicator')!.style.pointerEvents = "auto"
   document.getElementById('size_indicator')!.style.backgroundColor = "gray"
   window.addEventListener("mouseup", setOverview)
@@ -496,6 +497,7 @@ const setIndicatorActive = () => {
 const setOverview = () => {
   document.body.style.userSelect = ""
   document.body.style.pointerEvents = ""
+  document.documentElement.style.cursor = ""
   document.getElementById('size_indicator')!.style.backgroundColor = ""
   window.removeEventListener("mouseup", setOverview)
   window.removeEventListener("mousemove", changeSize)
@@ -528,6 +530,7 @@ const changeSize = (event: MouseEvent) => {
 const closeIndicator = () => {
   document.body.style.userSelect = ""
   document.body.style.pointerEvents = ""
+  document.documentElement.style.cursor = ""
   document.getElementById('size_indicator')!.style.backgroundColor = ""
   window.removeEventListener("mouseup", setOverview)
   window.removeEventListener("mousemove", changeSize)
