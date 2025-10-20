@@ -1,7 +1,7 @@
 <template>
   <div id="ismismcube-container">
     <div id="left_part">
-      <div id="page_view" title="此网站的总访量">
+      <div id="page_view" title="此网页的总访量">
         <img src="@/assets/page_view_icon.svg" alt="page_view">
         <b>{{ pageView == -1 ? '-' : pageView }}</b>
       </div>
@@ -343,7 +343,7 @@ const setISMInfo = (ismTag: string) => {
   if (!ismData.value || !ismData.value[ismTag]) return
   const ismTagData = ismData.value[ismTag]
   const ismTagfontSize = 1.1*ismInfoFontSize.value;
-  let contentHtml = `<div style='text-align: center; font-size: 1rem;'>`
+  let contentHtml = `<div style='text-align: center; font-size: ${ismInfoFontSize.value}rem;'>`
   if (ismTag.length >= 1) {
     contentHtml += `<p style='display: inline-block;width:${ismTagfontSize}rem;height:${ismTagfontSize}rem;line-height:${ismTagfontSize}rem;color:red;border:solid black ${ismTagfontSize/10}rem;'><b>${ismTag[0]}</b></p>`
   }
@@ -718,6 +718,7 @@ onUnmounted(() => {
   font-size: 0.8rem;
   display: flex;
   align-items: center;
+  cursor: default;
 }
 
 #page_view img {
@@ -735,6 +736,7 @@ onUnmounted(() => {
   display: flex;
   align-items: center;
   justify-content: right;
+  cursor: default;
 }
 
 #online_count b {

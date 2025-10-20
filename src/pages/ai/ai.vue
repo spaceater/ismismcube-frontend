@@ -16,15 +16,15 @@
           <div id="queue-info">
             <div id="executed-info">
               <span>已完成:</span>
-              <span class="highlight-number">{{ executedTaskCount == -1 ? '-' : executedTaskCount }}</span>
+              <span class="highlight">{{ executedTaskCount == -1 ? '-' : executedTaskCount }}</span>
             </div>
             <div id="waiting-info">
               <span>排队中:</span>
-              <span class="highlight-number">{{ waitingCount == -1 ? '-' : waitingCount }}</span>
+              <span class="highlight">{{ waitingCount == -1 ? '-' : waitingCount }}</span>
             </div>
             <div id="executing-info">
               <span>运行中:</span>
-              <span class="highlight-number">{{ executingCount == -1 ? '-' : executingCount }}</span>
+              <span class="highlight">{{ executingCount == -1 ? '-' : executingCount }}</span>
             </div>
           </div>
         </div>
@@ -46,10 +46,10 @@
           </div>
           <div id="task-info">
             <template v-if="taskStatus === 'queue'">
-              <span>排队位置: <span class="highlight-number">{{ queuePosition===-1 ? waitingCount : queuePosition }}</span> / <span class="highlight-number">{{ waitingCount===-1 ? '-' : waitingCount }}</span></span>
+              <span>排队位置: <span class="highlight">{{ queuePosition===-1 ? waitingCount : queuePosition+1 }}</span> / <span class="highlight">{{ waitingCount===-1 ? '-' : waitingCount }}</span></span>
             </template>
               <template v-else-if="taskStatus === 'running'">
-                <div>生成速度: <span class="highlight-number">{{ tokenSpeed.toFixed(1) }}</span> tokens/秒</div>
+                <div>生成速度: <span class="highlight">{{ tokenSpeed.toFixed(1) }}</span> tokens/秒</div>
               </template>
             <template v-else>
               <div>可用模型:</div>
@@ -68,16 +68,21 @@
                   </div>
                 </template>
               </div>
+              <span class="model-link">
+                <a href="https://space.bilibili.com/9168596" target="_blank">本地部署ai应用</a>
+                <span>与</span>
+                <a href="https://3dxt006znrxma34e9ked1jmanp9ljjg.taobao.com" target="_blank">购买ai整机</a>
+              </span>
             </template>
           </div>
         </div>
         <div class="divider-line"></div>
         <div id="introduction-area">
           <div class="intro-item">本网站提供AI对话服务，你可以在左侧选择模型，在右侧的输入栏中输入问题并点击发送按钮，发起一个对话任务。</div>
-          <div class="intro-item">本网站最多支持<span class="highlight-number">{{ serverConfig.max_concurrent_tasks == 0 ? '-' : serverConfig.max_concurrent_tasks }}</span>个对话任务同时运行。如果当前运行中的对话数量小于<span class="highlight-number">{{ serverConfig.max_concurrent_tasks == 0 ? '-' : serverConfig.max_concurrent_tasks }}</span>，你的对话任务会立刻开始运行，回答会生成在右侧的对话框内。</div>
-          <div class="intro-item">如果当前运行中的对话数量已经达到<span class="highlight-number">{{ serverConfig.max_concurrent_tasks == 0 ? '-' : serverConfig.max_concurrent_tasks }}</span>个，你发起的对话任务会进入排队状态，排队进度会实时显示在左侧的对话任务状态栏中。</div>
-          <div class="intro-item">当前排队中和运行中的对话数可以在左侧的服务器状态栏查看。</div>
+          <div class="intro-item">本网站最多支持<span class="highlight">{{ serverConfig.max_concurrent_tasks == 0 ? '-' : serverConfig.max_concurrent_tasks }}</span>个对话任务同时运行。如果当前运行中的对话数量小于<span class="highlight">{{ serverConfig.max_concurrent_tasks == 0 ? '-' : serverConfig.max_concurrent_tasks }}</span>，你的对话任务会立刻开始运行，回答会生成在右侧的对话框内。</div>
+          <div class="intro-item">如果当前运行中的对话数量已经达到<span class="highlight">{{ serverConfig.max_concurrent_tasks == 0 ? '-' : serverConfig.max_concurrent_tasks }}</span>个，你发起的对话任务会进入排队状态，排队进度会实时显示在左侧的对话任务状态栏中。</div>
           <div class="intro-item">当你的对话任务正在排队或运行时，你不能发起新的对话。</div>
+          <div class="intro-item">每天凌晨<span class="warning">4</span>点进行服务器维护，届时此网页的功能暂时无法使用。</div>
         </div>
         <div class="divider-line"></div>
         <div id="notice-area">
@@ -91,7 +96,7 @@
         </div>
         <div class="divider-line"></div>
         <div id="contact-area">
-          <div>对本网站有任何改进意见</div>
+          <div>对本网站有任何改进建议</div>
           <div>请联系本网站制作者B站账号</div>
           <div><a href='https://b23.tv/JACBxVp' target='_blank'>https://b23.tv/JACBxVp</a></div>
         </div>
@@ -328,6 +333,7 @@ const editingContent = ref('')
 const editingIndex = ref(-1)
 const lastBroadcastFlag = ref(-1)
 const executedTaskCount = ref(-1)
+const messageCreated = ref(false)
 const waitingCount = ref(-1)
 const executingCount = ref(-1)
 const queuePosition = ref(-1)
@@ -621,6 +627,7 @@ const connectTaskSocket = (websocketId: string) => {
     taskSocket = new WebSocket(wsUrl)
     taskSocket.addEventListener("open", () => {
       console.log("任务WebSocket连接成功")
+      queuePosition.value = waitingCount.value
       taskReconnectStartTime = null
       if (taskReconnectTimer) {
         clearTimeout(taskReconnectTimer)
@@ -640,6 +647,10 @@ const connectTaskSocket = (websocketId: string) => {
               }
               if (data.queue_position == -1) {
                 taskStatus.value = 'running'
+                if (!messageCreated.value) {
+                  history.value.push(reactive({ role: selectedModel.value || 'assistant', content: '' }))
+                  messageCreated.value = true
+                }
               } else {
                 taskStatus.value = 'queue'
               }
@@ -650,6 +661,10 @@ const connectTaskSocket = (websocketId: string) => {
         }
         else if (message.startsWith('data')) {
           taskStatus.value = 'running'
+          if (!messageCreated.value) {
+            history.value.push(reactive({ role: selectedModel.value || 'assistant', content: '' }))
+            messageCreated.value = true
+          }
           if (message.trim().endsWith('[DONE]')) {
             disconnectTaskSocket()
             scrollToBottom()
@@ -707,8 +722,7 @@ const connectTaskSocket = (websocketId: string) => {
         }, 1000)
       }
       else {
-        queuePosition.value = -1
-        taskStatus.value = 'none'
+        disconnectTaskSocket()
       }
     })
   } catch (error) {
@@ -767,6 +781,7 @@ const stopTask = () => {
 const callAI = async () => {
   queuePosition.value = -1
   taskStatus.value = 'queue'
+  messageCreated.value = false
   taskReconnectStartTime = null
   resetTokenStats()
   if (taskReconnectTimer) {
@@ -807,8 +822,6 @@ const callAI = async () => {
     if (!websocketId) {
       throw new Error('未获取到websocket_id')
     }
-    const streamMessage = reactive({ role: selectedModel.value || 'assistant', content: '' })
-    history.value.push(streamMessage)
     connectTaskSocket(websocketId)
   } catch (error) {
     console.error('AI Error:', error)
@@ -867,8 +880,13 @@ onUnmounted(() => {
   font-family: "en_font", "other_font", sans-serif;
 }
 
-.highlight-number {
+.highlight {
   color: green;
+  font-weight: bold;
+}
+
+.warning {
+  color:rgb(255,30,30);
   font-weight: bold;
 }
 
@@ -917,11 +935,11 @@ onUnmounted(() => {
 
 #button-area {
   position: relative;
-  margin: 0.5rem 0;
+  margin: 1rem 0;
   display: flex;
   gap: 0.5rem;
   justify-content: center;
-  padding: 0.5rem;
+  padding: 0 0.5rem;
 }
 
 .divider-line {
@@ -965,6 +983,7 @@ onUnmounted(() => {
   position: relative;
   margin: 0.5rem 0;
   padding: 0;
+  cursor: default;
 }
 
 #connection-status {
@@ -994,6 +1013,7 @@ onUnmounted(() => {
   display: flex;
   margin: 0.5rem;
   font-size: 0.8rem;
+  white-space: nowrap;
 }
 
 #executed-info, #waiting-info, #executing-info {
@@ -1012,6 +1032,7 @@ onUnmounted(() => {
 
 #task-area {
   margin: 0.5rem 0;
+  cursor: default;
 }
 
 #task-status {
@@ -1093,7 +1114,6 @@ onUnmounted(() => {
 
 #models-list {
   margin: 0.2rem 1rem;
-  padding: 0.2rem 0;
   background-color: white;
   border-radius: 0.2rem;
   font-weight: bold;
@@ -1138,6 +1158,14 @@ onUnmounted(() => {
   right: -1rem;
   color: green;
   font-size: 1rem;
+}
+
+.model-link {
+  display: block;
+  margin-top: 0.5rem;
+  text-align: center;
+  font-size: 0.8rem;
+  font-style: italic;
 }
 
 #introduction-area, #notice-area, #warning-area {
