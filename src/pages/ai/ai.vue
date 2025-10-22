@@ -102,11 +102,12 @@
         </div>
       </div>
       <div id="message-panel">
-        <div id="message-area" ref="messageAreaRef">
-          <div v-if="history.length === 0" class="message assistant">
-            <div class="content assistant">你好，我是AI助手，有什么可以帮助你的吗？</div>
-          </div>
-          <div v-for="(msg, i) in history" :key="i" class="message" :class="[msg.role, { 'faded': editingIndex !== -1 && i > editingIndex }]">
+        <div id="message-area-wrapper">
+          <div id="message-area" ref="messageAreaRef" @scroll="checkContentOverflow">
+            <div v-if="history.length === 0" class="message assistant">
+              <div class="content assistant">你好，我是AI助手，有什么可以帮助你的吗？</div>
+            </div>
+            <div v-for="(msg, i) in history" :key="i" class="message" :class="[msg.role, { 'faded': editingIndex !== -1 && i > editingIndex }]">
             <template v-if="msg.role === 'user'">
               <AdaptiveTextarea v-if="editingIndex === i"
                 v-model="editingContent"
@@ -146,7 +147,13 @@
             </template>
           </div>
         </div>
-        <div id="input-area">
+        <div id="message-area-overlay">
+          <div v-if="isContentOverflowing" id="generating-indicator">
+            <span @click="scrollToBottom">↓ 更多内容正在生成中...</span>
+          </div>
+        </div>
+      </div>
+      <div id="input-area">
           <AdaptiveTextarea
             id="input-textarea"
             v-model="inputText"
@@ -333,13 +340,13 @@ const editingContent = ref('')
 const editingIndex = ref(-1)
 const lastBroadcastFlag = ref(-1)
 const executedTaskCount = ref(-1)
-const messageCreated = ref(false)
 const waitingCount = ref(-1)
 const executingCount = ref(-1)
 const queuePosition = ref(-1)
 const tokenCount = ref(0)
 const tokenSpeedStartTime = ref<number | null>(null)
 const tokenSpeed = ref(0.0)
+const isContentOverflowing = ref(false)
 const showSettingsModal = ref(false)
 const tempChatConfig = ref<ChatConfig>({
   prompt: '',
@@ -434,6 +441,28 @@ const scrollToBottom = () => {
       messageAreaRef.value.scrollTop = messageAreaRef.value.scrollHeight
     }
   })
+}
+
+const checkContentOverflow = () => {
+  nextTick(() => {
+    if (messageAreaRef.value && taskStatus.value === 'running') {
+      const element = messageAreaRef.value
+      // 检测是否有溢出内容（scrollHeight > clientHeight）且未滚动到底部
+      const hasOverflow = element.scrollHeight > element.clientHeight
+      const isAtBottom = element.scrollHeight - element.scrollTop - element.clientHeight < 10
+      isContentOverflowing.value = hasOverflow && !isAtBottom
+    } else {
+      isContentOverflowing.value = false
+    }
+  })
+}
+
+const createMessage = () => {
+  const lastMessage = history.value[history.value.length - 1]
+  const needNewMessage = !lastMessage || lastMessage.role === 'user'
+  if (needNewMessage) {
+    history.value.push(reactive({ role: selectedModel.value || 'assistant', content: '' }))
+  }
 }
 
 const saveChat = () => {
@@ -645,15 +674,7 @@ const connectTaskSocket = (websocketId: string) => {
               if (queuePosition.value > data.queue_position) {
                 queuePosition.value = data.queue_position
               }
-              if (data.queue_position == -1) {
-                taskStatus.value = 'running'
-                if (!messageCreated.value) {
-                  history.value.push(reactive({ role: selectedModel.value || 'assistant', content: '' }))
-                  messageCreated.value = true
-                }
-              } else {
-                taskStatus.value = 'queue'
-              }
+              taskStatus.value = 'queue'
             }
           } catch (error) {
             console.error("任务WebSocket JSON解析失败:", message, error)
@@ -661,10 +682,7 @@ const connectTaskSocket = (websocketId: string) => {
         }
         else if (message.startsWith('data')) {
           taskStatus.value = 'running'
-          if (!messageCreated.value) {
-            history.value.push(reactive({ role: selectedModel.value || 'assistant', content: '' }))
-            messageCreated.value = true
-          }
+          createMessage()
           if (message.trim().endsWith('[DONE]')) {
             disconnectTaskSocket()
             scrollToBottom()
@@ -684,6 +702,7 @@ const connectTaskSocket = (websocketId: string) => {
                 if (lastMessage && lastMessage.role !== 'user') {
                   lastMessage.content += choice.delta.content.replace(/\n{2,}/g, '\n')
                   updateTokenSpeed()
+                  checkContentOverflow()
                   if (tokenCount.value >= serverChatConfig.value.max_tokens-1) {
                     lastMessage.content += '\n\n!!!【最大生成token数量: ' + serverChatConfig.value.max_tokens + '，当前生成内容的长度已经达到最大生成token数量限制】!!!'
                   }
@@ -781,7 +800,6 @@ const stopTask = () => {
 const callAI = async () => {
   queuePosition.value = -1
   taskStatus.value = 'queue'
-  messageCreated.value = false
   taskReconnectStartTime = null
   resetTokenStats()
   if (taskReconnectTimer) {
@@ -1218,8 +1236,20 @@ onUnmounted(() => {
   min-height: 0;
 }
 
-#message-area {
+#message-area-wrapper {
   flex: 1;
+  position: relative;
+  display: grid;
+  grid-template-rows: 1fr;
+  grid-template-columns: 1fr;
+  margin: 0.5rem 1rem;
+  min-height: 0;
+}
+
+#message-area {
+  z-index: 1;
+  grid-row: 1;
+  grid-column: 1;
   overflow: auto;
   padding: 0.5rem 1rem;
   display: flex;
@@ -1227,8 +1257,19 @@ onUnmounted(() => {
   gap: 1rem;
   background-color: rgb(250, 250, 250);
   border-radius: 0.5rem;
-  margin: 0.5rem 1rem;
-  box-shadow: inset 0 0 2px 2px rgba(0, 0, 0, 0.1);
+  scrollbar-color: rgba(128, 128, 128, 0.5) transparent;
+}
+
+#message-area::-webkit-scrollbar {
+  background: transparent;
+}
+
+#message-area::-webkit-scrollbar-thumb {
+  background: rgba(128, 128, 128, 0.5);
+}
+
+#message-area::-webkit-scrollbar-thumb:hover {
+  background: rgba(128, 128, 128, 0.7);
 }
 
 .message {
@@ -1340,6 +1381,57 @@ onUnmounted(() => {
 .confirm-button:hover {
   background-color: rgba(76, 175, 80, 0.2);
   transform: scale(1.1);
+}
+
+#message-area-overlay {
+  z-index: 2;
+  grid-row: 1;
+  grid-column: 1;
+  border-radius: 0.5rem;
+  overflow: hidden;
+  pointer-events: none;
+  position: relative;
+  box-shadow: inset 0 0 2px 2px rgba(0, 0, 0, 0.1);
+}
+
+#generating-indicator {
+  z-index: 1;
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  text-align: center;
+  padding: 1rem 0 0.2rem 0;
+  color: white;
+  font-weight: bold;
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.8), -1px -1px 2px rgba(0, 0, 0, 0.8), 1px -1px 2px rgba(0, 0, 0, 0.8), -1px 1px 2px rgba(0, 0, 0, 0.8);
+  pointer-events: auto;
+}
+
+#generating-indicator span {
+  cursor: pointer;
+  user-select: none;
+}
+
+#generating-indicator::before {
+  z-index: -1;
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(to top, rgba(100, 100, 100, 1), rgba(100, 100, 100, 0));
+  animation: pulse-opacity 2s ease-in-out infinite;
+}
+
+@keyframes pulse-opacity {
+  0%, 100% {
+    opacity: 0.4;
+  }
+  50% {
+    opacity: 0.8;
+  }
 }
 
 #input-area {

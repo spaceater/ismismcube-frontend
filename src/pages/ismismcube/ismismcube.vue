@@ -93,10 +93,13 @@
         <p id="axis_label_z">认识论</p>
         <p id="axis_label_i">目的论</p>
       </div>
-      <div id="ism_info">
-        <div id="increase_fontsize_button" @click="increaseFontSize"></div>
-        <div id="decrease_fontsize_button" @click="decreaseFontSize"></div>
-        <div id="ism_info_content" v-html="content"></div>
+      <div id="ism_info_wrapper">
+        <div id="ism_info">
+          <div id="increase_fontsize_button" @click="increaseFontSize"></div>
+          <div id="decrease_fontsize_button" @click="decreaseFontSize"></div>
+          <div id="ism_info_content" v-html="content"></div>
+        </div>
+        <div id="ism_info_overlay"></div>
       </div>
       <div id="size_adjuster">
         <div
@@ -1095,16 +1098,37 @@ onUnmounted(() => {
   background-color: darkorange;
 }
 
-#ism_info {
+#ism_info_wrapper {
   position: absolute;
   left: 0.5rem;
   right: 0.5rem;
   top: 19.5rem;
+  border-radius: 1rem;
+  overflow: hidden;
   height: calc(100% - 20rem);
+}
+
+#ism_info {
+  z-index: 1;
+  position: absolute;
+  width: 100%;
+  height: 100%;
   background-color: rgb(200, 200, 200);
   border-radius: 1rem;
-  box-shadow: inset 0 0 3px 3px gray;
   overflow: auto;
+  scrollbar-color: rgba(128, 128, 128, 0.5) transparent;
+}
+
+#ism_info::-webkit-scrollbar {
+  background: transparent;
+}
+
+#ism_info::-webkit-scrollbar-thumb {
+  background: rgba(128, 128, 128, 0.5);
+}
+
+#ism_info::-webkit-scrollbar-thumb:hover {
+  background: rgba(128, 128, 128, 0.7);
 }
 
 #increase_fontsize_button {
@@ -1177,6 +1201,16 @@ onUnmounted(() => {
   flex-direction: column;
   align-items: center;
   gap: 0.5rem;
+}
+
+#ism_info_overlay {
+  z-index: 2;
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  border-radius: 1rem;
+  box-shadow: inset 0 0 3px 3px gray;
+  pointer-events: none;
 }
 
 #size_adjuster {
