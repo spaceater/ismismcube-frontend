@@ -1414,14 +1414,3 @@ onUnmounted(() => {
   align-items: center;
 }
 </style>
-
-<style module>
-a {
-  font-style: italic;
-  color: black;
-}
-
-a:hover {
-  color: #795CB2;
-}
-</style>

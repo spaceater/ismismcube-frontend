@@ -19,3 +19,12 @@ html, body {
   height: 100vh;
   overflow: hidden;
 }
+
+a {
+  font-style: italic;
+  color: black;
+}
+
+a:hover {
+  color: #3366cc;
+}

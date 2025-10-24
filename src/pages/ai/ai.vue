@@ -105,55 +105,55 @@
         <div id="message-area-wrapper">
           <div id="message-area" ref="messageAreaRef" @scroll="checkContentOverflow">
             <div v-if="history.length === 0" class="message assistant">
-              <div class="content assistant">你好，我是AI助手，有什么可以帮助你的吗？</div>
+              <div class="content assistant markdown" v-html="renderMarkdown(`你好，我是AI助手。请在左侧选择模型，在下方输入问题并点击发送按钮，向我发起一个对话。`)"></div>
             </div>
             <div v-for="(msg, i) in history" :key="i" class="message" :class="[msg.role, { 'faded': editingIndex !== -1 && i > editingIndex }]">
-            <template v-if="msg.role === 'user'">
-              <AdaptiveTextarea v-if="editingIndex === i"
-                v-model="editingContent"
-                class="content user editing"
-                max-width="calc(100% - 3rem)"
-                @keydown.enter.prevent="confirmEditing"
-                @keydown.escape.prevent="exitEditing"
-                @vue:mounted="(vnode: any) => selectAndFocus(vnode)"
-                ref="editingElement"
-              />
-              <div v-else
-                class="content user"
-              >{{ msg.content }}</div>
-              <template v-if="taskStatus === 'none'">
-                <div v-if="editingIndex !== i" class="edit-icon" @click="startEdit(i)" title="编辑此消息">
-                  <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <path d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L10.582 16.07a4.5 4.5 0 0 1-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 0 1 1.13-1.897l8.932-8.931Zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0 1 15.75 21H5.25A2.25 2.25 0 0 1 3 18.75V8.25A2.25 2.25 0 0 1 5.25 6H10" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                  </svg>
-                </div>
-                <div v-else class="edit-buttons">
-                  <div class="edit-button cancel-button" @click="exitEditing" title="取消">
+              <template v-if="msg.role === 'user'">
+                <AdaptiveTextarea v-if="editingIndex === i"
+                  v-model="editingContent"
+                  class="content user editing"
+                  max-width="calc(100% - 3rem)"
+                  @keydown.enter.prevent="confirmEditing"
+                  @keydown.escape.prevent="exitEditing"
+                  @vue:mounted="(vnode: any) => selectAndFocus(vnode)"
+                  ref="editingElement"
+                />
+                <div v-else
+                  class="content user"
+                >{{ msg.content }}</div>
+                <template v-if="taskStatus === 'none'">
+                  <div v-if="editingIndex !== i" class="edit-icon" @click="startEdit(i)" title="编辑此消息">
                     <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                      <path d="M18 6L6 18M6 6l12 12" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                      <path d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L10.582 16.07a4.5 4.5 0 0 1-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 0 1 1.13-1.897l8.932-8.931Zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0 1 15.75 21H5.25A2.25 2.25 0 0 1 3 18.75V8.25A2.25 2.25 0 0 1 5.25 6H10" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
                     </svg>
                   </div>
-                  <div class="edit-button confirm-button" @click="confirmEditing" title="确认">
-                    <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                      <path d="M20 6L9 17l-5-5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                    </svg>
+                  <div v-else class="edit-buttons">
+                    <div class="edit-button cancel-button" @click="exitEditing" title="取消">
+                      <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M18 6L6 18M6 6l12 12" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                      </svg>
+                    </div>
+                    <div class="edit-button confirm-button" @click="confirmEditing" title="确认">
+                      <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M20 6L9 17l-5-5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                      </svg>
+                    </div>
                   </div>
-                </div>
+                </template>
               </template>
-            </template>
-            <template v-else>
-              <div class="model-label">{{ msg.role }}</div>
-              <div class="content assistant">{{ msg.content }}</div>
-            </template>
+              <template v-else>
+                <div class="model-label">{{ msg.role }}</div>
+                <div class="content assistant markdown" v-html="renderMarkdown(msg.content)"></div>
+              </template>
+            </div>
+          </div>
+          <div id="message-area-overlay">
+            <div v-if="isContentOverflowing" id="generating-indicator">
+              <span @click="scrollToBottom">↓ 更多内容正在生成中...</span>
+            </div>
           </div>
         </div>
-        <div id="message-area-overlay">
-          <div v-if="isContentOverflowing" id="generating-indicator">
-            <span @click="scrollToBottom">↓ 更多内容正在生成中...</span>
-          </div>
-        </div>
-      </div>
-      <div id="input-area">
+        <div id="input-area">
           <AdaptiveTextarea
             id="input-textarea"
             v-model="inputText"
@@ -286,6 +286,13 @@
 import { ref, onMounted, onUnmounted, reactive, computed, nextTick } from 'vue'
 import { useRouter } from 'vue-router'
 import AdaptiveTextarea from '@/components/AdaptiveTextarea.vue'
+import { marked } from 'marked'
+
+marked.setOptions({
+  breaks: true, // 支持换行
+  gfm: true, // GitHub Flavored Markdown
+  pedantic: false, // 不使用严格模式
+})
 
 interface ServerConfig {
   available_models: string[]
@@ -301,6 +308,33 @@ interface ChatConfig {
   frequency_penalty: number
   presence_penalty: number
   repeat_penalty: number
+}
+
+// 将 markdown 转换为 HTML
+const renderMarkdown = (content: string) => {
+  try {
+    // 使用块级HTML元素作为占位符，避免被 marked 包裹在 <p> 标签中
+    const thinkStartPlaceholder = '<div class="think-placeholder-start"></div>'
+    const thinkEndPlaceholder = '<div class="think-placeholder-end"></div>'
+
+    // 替换 <think> 标签为占位符
+    let processedContent = content
+      .replace(/<think>/g, thinkStartPlaceholder)
+      .replace(/<\/think>/g, thinkEndPlaceholder)
+
+    // 使用 marked 处理 markdown
+    let result = marked(processedContent, { async: false }) as string
+
+    // 将占位符替换回 <think> 标签
+    result = result
+      .replace(/<div class="think-placeholder-start"><\/div>/g, '<think>')
+      .replace(/<div class="think-placeholder-end"><\/div>/g, '</think>')
+
+    return result
+  } catch (error) {
+    console.error('Markdown rendering error:', error)
+    return content
+  }
 }
 
 const router = useRouter()
@@ -700,11 +734,11 @@ const connectTaskSocket = (websocketId: string) => {
               if (choice.delta && choice.delta.content) {
                 const lastMessage = history.value[history.value.length - 1]
                 if (lastMessage && lastMessage.role !== 'user') {
-                  lastMessage.content += choice.delta.content.replace(/\n{2,}/g, '\n')
+                  lastMessage.content += choice.delta.content
                   updateTokenSpeed()
                   checkContentOverflow()
                   if (tokenCount.value >= serverChatConfig.value.max_tokens-1) {
-                    lastMessage.content += '\n\n!!!【最大生成token数量: ' + serverChatConfig.value.max_tokens + '，当前生成内容的长度已经达到最大生成token数量限制】!!!'
+                    lastMessage.content += '\n\n!!!【最大生成token数量: ' + serverChatConfig.value.max_tokens + '，当前生成内容的长度已经达到最大生成token数量限制，请拆分你的问题或改变系统提示词以减少生成内容的长度】!!!'
                   }
                 }
               }
@@ -1309,6 +1343,125 @@ onUnmounted(() => {
   left: 1rem;
 }
 
+/* Markdown 样式 */
+.markdown {
+  white-space: normal !important;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+}
+
+.markdown :deep(think) {
+  display: block;
+  font-size: 0.9em;
+  font-style: italic;
+  padding: 0.2em 0.3em;
+  background-color: rgba(128, 128, 128, 0.1);
+  border-left: 0.3em solid rgba(128, 128, 128, 0.5);
+  border-radius: 0.3em;
+}
+
+.markdown :deep(ul),
+.markdown :deep(ol) {
+  padding-left: 0.5em;
+}
+
+.markdown :deep(h1),
+.markdown :deep(h2),
+.markdown :deep(h3),
+.markdown :deep(h4),
+.markdown :deep(h5),
+.markdown :deep(h6) {
+  font-weight: bold;
+}
+
+.markdown :deep(h1) {
+  font-size: 1.5em;
+}
+
+.markdown :deep(h2) {
+  font-size: 1.3em;
+}
+
+.markdown :deep(h3) {
+  font-size: 1.15em;
+}
+
+.markdown :deep(h4) {
+  font-size: 1em;
+}
+
+.markdown :deep(code) {
+  background-color: rgba(128, 128, 128, 0.1);
+  padding: 0.2em;
+  border-radius: 0.3em;
+  font-family: 'Consolas', 'Monaco', 'Courier New', Courier, monospace;
+  font-size: 0.9em;
+  color: darkgreen;
+}
+
+.markdown :deep(pre) {
+  background-color: rgba(128, 128, 128, 0.1);
+  padding: 0.2em 0.8em;
+  border-radius: 0.3em;
+  border: 1px solid black;
+}
+
+.markdown :deep(pre code) {
+  background-color: transparent;
+  padding: 0;
+  border-radius: 0;
+  color: inherit;
+  display: block;
+}
+
+.markdown :deep(blockquote) {
+  padding: 0.5em 1em;
+  border-left: 0.3em solid rgba(128, 128, 128, 0.5);
+  background-color: rgba(128, 128, 128, 0.1);
+  color: rgb(100, 100, 100);
+}
+
+.markdown :deep(table) {
+  border-collapse: collapse;
+  width: 100%;
+}
+
+.markdown :deep(table th),
+.markdown :deep(table td) {
+  border: 1px solid black;
+  padding: 0.3em;
+  text-align: center;
+}
+
+.markdown :deep(table th) {
+  background-color: rgba(128, 128, 128, 0.1);
+  font-weight: bold;
+}
+
+.markdown :deep(table tr:nth-child(even)) {
+  background-color: rgba(128, 128, 128, 0.1);
+}
+
+.markdown :deep(img) {
+  max-width: 100%;
+  height: auto;
+  display: block;
+}
+
+.markdown :deep(br) {
+  display: block;
+  content: "";
+  margin: 0.5em 0;
+}
+
+.markdown > *:first-child {
+  margin-top: 0;
+}
+
+.markdown > *:last-child {
+  margin-bottom: 0;
+}
+
 .content.user {
   background-color: green;
   color: white;
@@ -1430,7 +1583,7 @@ onUnmounted(() => {
     opacity: 0.4;
   }
   50% {
-    opacity: 0.8;
+    opacity: 0.9;
   }
 }
 
