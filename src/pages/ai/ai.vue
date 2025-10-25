@@ -1,7 +1,15 @@
 <template>
   <div id="ai-container">
     <div id="main-container">
-      <div id="control-panel">
+      <div id="control-panel" :class="{ collapsed: isControlPanelClosed }" ref="controlPanelRef">
+        <div id="control-panel-toggle" @click="toggleControlPanel" :class="{ collapsed: isControlPanelClosed }">
+          <svg v-if="!isControlPanelClosed" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M15 18L9 12L15 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+          <svg v-else viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M9 18L15 12L9 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </div>
         <div id="button-area">
           <div id="ismismcube-button" @click="goIsmismcube">返回主页</div>
           <div id="return-button" @click="openMoreContent">更多内容</div>
@@ -78,11 +86,10 @@
         </div>
         <div class="divider-line"></div>
         <div id="introduction-area">
-          <div class="intro-item">本网站提供AI对话服务，你可以在左侧选择模型，在右侧的输入栏中输入问题并点击发送按钮，发起一个对话任务。</div>
-          <div class="intro-item">本网站最多支持<span class="highlight">{{ serverConfig.max_concurrent_tasks == 0 ? '-' : serverConfig.max_concurrent_tasks }}</span>个对话任务同时运行。如果当前运行中的对话数量小于<span class="highlight">{{ serverConfig.max_concurrent_tasks == 0 ? '-' : serverConfig.max_concurrent_tasks }}</span>，你的对话任务会立刻开始运行，回答会生成在右侧的对话框内。</div>
-          <div class="intro-item">如果当前运行中的对话数量已经达到<span class="highlight">{{ serverConfig.max_concurrent_tasks == 0 ? '-' : serverConfig.max_concurrent_tasks }}</span>个，你发起的对话任务会进入排队状态，排队进度会实时显示在左侧的对话任务状态栏中。</div>
+          <div class="intro-item">本网页提供AI对话服务，你可以在左侧选择模型，在右侧的输入栏中输入问题并点击发送按钮，发起一个对话任务。</div>
+          <div class="intro-item">本网页最多支持<span class="highlight">{{ serverConfig.max_concurrent_tasks == 0 ? '-' : serverConfig.max_concurrent_tasks }}</span>个对话任务同时运行。如果当前运行中的对话数量小于<span class="highlight">{{ serverConfig.max_concurrent_tasks == 0 ? '-' : serverConfig.max_concurrent_tasks }}</span>个，你提交的对话任务会立刻开始运行并生成回答；否则，你发起的对话任务会进入排队状态。</div>
           <div class="intro-item">当你的对话任务正在排队或运行时，你不能发起新的对话。</div>
-          <div class="intro-item">每天凌晨<span class="warning">4</span>点进行服务器维护，届时此网页的功能暂时无法使用。</div>
+          <div class="intro-item">每天北京时间凌晨<span class="warning">4</span>点进行服务器维护（维护大约持续2分钟），届时此网页的功能可能暂时无法使用。</div>
         </div>
         <div class="divider-line"></div>
         <div id="notice-area">
@@ -99,10 +106,16 @@
           <div>对本网站有任何改进建议</div>
           <div>请联系本网站制作者B站账号</div>
           <div><a href='https://b23.tv/JACBxVp' target='_blank'>https://b23.tv/JACBxVp</a></div>
+          <div><a href='https://github.com/spaceater/ismismcube-frontend' target='_blank'>此网页的Github仓库</a></div>
         </div>
       </div>
-      <div id="message-panel">
+      <div id="message-panel" :class="{ widened: isControlPanelClosed }">
         <div id="message-area-wrapper">
+          <div id="message-area-overlay">
+            <div v-if="isContentOverflowing" id="generating-indicator">
+              <span @click="scrollToBottom">↓ 更多内容正在生成中...</span>
+            </div>
+          </div>
           <div id="message-area" ref="messageAreaRef" @scroll="checkContentOverflow">
             <div v-if="history.length === 0" class="message assistant">
               <div class="content assistant markdown" v-html="renderMarkdown(`你好，我是AI助手。请在左侧选择模型，在下方输入问题并点击发送按钮，向我发起一个对话。`)"></div>
@@ -145,11 +158,6 @@
                 <div class="model-label">{{ msg.role }}</div>
                 <div class="content assistant markdown" v-html="renderMarkdown(msg.content)"></div>
               </template>
-            </div>
-          </div>
-          <div id="message-area-overlay">
-            <div v-if="isContentOverflowing" id="generating-indicator">
-              <span @click="scrollToBottom">↓ 更多内容正在生成中...</span>
             </div>
           </div>
         </div>
@@ -366,6 +374,7 @@ const userChatConfig = ref<ChatConfig>({
   repeat_penalty: 0
 })
 const history = ref<Array<{ role: string, content: string }>>([])
+const controlPanelRef = ref<HTMLDivElement>()
 const messageAreaRef = ref<HTMLDivElement>()
 const inputText = ref('')
 const inputRef = ref<HTMLTextAreaElement>()
@@ -382,6 +391,7 @@ const tokenSpeedStartTime = ref<number | null>(null)
 const tokenSpeed = ref(0.0)
 const isContentOverflowing = ref(false)
 const showSettingsModal = ref(false)
+const isControlPanelClosed = ref(false)
 const tempChatConfig = ref<ChatConfig>({
   prompt: '',
   content_size: 0,
@@ -412,6 +422,10 @@ const openMoreContent = () => {
 
 const selectModel = (model: string) => {
   selectedModel.value = model
+}
+
+const toggleControlPanel = () => {
+  isControlPanelClosed.value = !isControlPanelClosed.value
 }
 
 const openSettingsModal = () => {
@@ -470,10 +484,38 @@ const confirmEditing = async () => {
 }
 
 const scrollToBottom = () => {
-  nextTick(() => {
-    if (messageAreaRef.value) {
-      messageAreaRef.value.scrollTop = messageAreaRef.value.scrollHeight
+  if (!messageAreaRef.value) return
+  animateScroll(messageAreaRef.value, messageAreaRef.value.scrollHeight, 1000, 'down')
+}
+
+const animateScroll = (element: HTMLElement, target: number, duration: number, direction: 'down' | 'up', onComplete?: () => void) => {
+  const start = Date.now()
+  const animate = () => {
+    const elapsed = Date.now() - start
+    const progress = Math.min(elapsed / duration, 1)
+    const ease = progress < 0.5
+      ? 2 * progress * progress
+      : 1 - Math.pow(-2 * progress + 2, 2) / 2
+    const scrollPosition = direction === 'down'
+      ? target * ease
+      : target * (1 - ease)
+    element.scrollTop = scrollPosition
+    if (progress < 1) {
+      requestAnimationFrame(animate)
+    } else if (onComplete) {
+      console.log(Date.now()-start, 'ms')
+      onComplete()
     }
+  }
+  requestAnimationFrame(animate)
+}
+
+const autoScrollControlPanel = () => {
+  if (!controlPanelRef.value) return
+  const element = controlPanelRef.value
+  const target = element.scrollHeight
+  animateScroll(element, target, 1000, 'down', () => {
+    animateScroll(element, target, 1000, 'up')
   })
 }
 
@@ -906,6 +948,7 @@ onMounted(() => {
   document.title = 'AI-VMZ对话体验'
   connectBroadcastSocket()
   fetchExecutedTaskCount()
+  autoScrollControlPanel()
 })
 
 onUnmounted(() => {
@@ -962,27 +1005,56 @@ onUnmounted(() => {
   min-height: 30rem;
   margin: auto;
   border-radius: 1rem;
-  display: flex;
   overflow: hidden;
-}
-
-@media (orientation: portrait) {
-  #ai-container {
-    padding: 0;
-  }
-  #main-container{
-    border-radius: 0;
-  }
 }
 
 #control-panel {
   z-index: 2;
+  position: absolute;
+  left: 0;
+  top: 0;
   width: 15rem;
   height: 100%;
-  flex-shrink: 0;
   background-color: rgb(230, 230, 230);
   box-shadow: -1.5rem 0 1rem 1rem black;
+  transition: all 1s ease-in-out;
   overflow-y: auto;
+}
+
+#control-panel.collapsed {
+  left: -15rem;
+}
+
+#control-panel-toggle {
+  position: fixed;
+  top: 2rem;
+  left: 19rem;
+  width: 1.5rem;
+  height: 1.5rem;
+  background-color: rgb(230, 230, 230);
+  border-radius: 0 0.5rem 0.5rem 0;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: left 1s ease-in-out;
+  box-shadow: 0.1rem 0.1rem 0.1rem rgba(0, 0, 0, 0.3);
+}
+
+#control-panel-toggle.collapsed {
+  left: 4rem;
+}
+
+#control-panel-toggle:hover {
+  background-color:rgb(200, 200, 200);
+  width: calc(1.5rem + 3px);
+}
+
+#control-panel-toggle svg {
+  width: 1rem;
+  height: 1rem;
+  color: black;
+  stroke: black;
 }
 
 #button-area {
@@ -1260,7 +1332,9 @@ onUnmounted(() => {
 
 #message-panel {
   z-index: 1;
-  flex: 1;
+  position: absolute;
+  left: 15rem;
+  width: calc(100% - 15rem);
   height: 100%;
   background-color: white;
   display: flex;
@@ -1268,6 +1342,12 @@ onUnmounted(() => {
   /* 确保flex容器不会被其中的子元素撑开撑开 */
   min-width: 0;
   min-height: 0;
+  transition: all 1s ease-in-out;
+}
+
+#message-panel.widened {
+  left: 0;
+  width: 100%;
 }
 
 #message-area-wrapper {
@@ -1280,6 +1360,57 @@ onUnmounted(() => {
   min-height: 0;
 }
 
+#message-area-overlay {
+  z-index: 2;
+  grid-row: 1;
+  grid-column: 1;
+  border-radius: 0.5rem;
+  overflow: hidden;
+  pointer-events: none;
+  position: relative;
+  box-shadow: inset 0 0 2px 2px rgba(0, 0, 0, 0.1);
+}
+
+#generating-indicator {
+  z-index: 1;
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  text-align: center;
+  padding: 1rem 0 0.2rem 0;
+  color: white;
+  font-weight: bold;
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.8), -1px -1px 2px rgba(0, 0, 0, 0.8), 1px -1px 2px rgba(0, 0, 0, 0.8), -1px 1px 2px rgba(0, 0, 0, 0.8);
+  pointer-events: auto;
+}
+
+#generating-indicator span {
+  cursor: pointer;
+  user-select: none;
+}
+
+#generating-indicator::before {
+  z-index: -1;
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(to top, rgba(100, 100, 100, 1), rgba(100, 100, 100, 0));
+  animation: pulse-opacity 1.5s ease-in-out infinite;
+}
+
+@keyframes pulse-opacity {
+  0%, 100% {
+    opacity: 0.3;
+  }
+  50% {
+    opacity: 0.9;
+  }
+}
+
 #message-area {
   z-index: 1;
   grid-row: 1;
@@ -1290,7 +1421,6 @@ onUnmounted(() => {
   flex-direction: column;
   gap: 1rem;
   background-color: rgb(250, 250, 250);
-  border-radius: 0.5rem;
   scrollbar-color: rgba(128, 128, 128, 0.5) transparent;
 }
 
@@ -1534,57 +1664,6 @@ onUnmounted(() => {
 .confirm-button:hover {
   background-color: rgba(76, 175, 80, 0.2);
   transform: scale(1.1);
-}
-
-#message-area-overlay {
-  z-index: 2;
-  grid-row: 1;
-  grid-column: 1;
-  border-radius: 0.5rem;
-  overflow: hidden;
-  pointer-events: none;
-  position: relative;
-  box-shadow: inset 0 0 2px 2px rgba(0, 0, 0, 0.1);
-}
-
-#generating-indicator {
-  z-index: 1;
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  text-align: center;
-  padding: 1rem 0 0.2rem 0;
-  color: white;
-  font-weight: bold;
-  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.8), -1px -1px 2px rgba(0, 0, 0, 0.8), 1px -1px 2px rgba(0, 0, 0, 0.8), -1px 1px 2px rgba(0, 0, 0, 0.8);
-  pointer-events: auto;
-}
-
-#generating-indicator span {
-  cursor: pointer;
-  user-select: none;
-}
-
-#generating-indicator::before {
-  z-index: -1;
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: linear-gradient(to top, rgba(100, 100, 100, 1), rgba(100, 100, 100, 0));
-  animation: pulse-opacity 2s ease-in-out infinite;
-}
-
-@keyframes pulse-opacity {
-  0%, 100% {
-    opacity: 0.4;
-  }
-  50% {
-    opacity: 0.9;
-  }
 }
 
 #input-area {
@@ -1920,6 +1999,43 @@ onUnmounted(() => {
   background-color: darkgreen;
   transform: translateY(-2px);
   box-shadow: 0.4rem 0.4rem 0.3rem rgba(0, 0, 0, 0.3);
+}
+
+/* 竖屏优化 */
+@media (orientation: portrait) {
+  #ai-container {
+    padding: 0;
+  }
+
+  #main-container{
+    min-width: 0;
+    border-radius: 0;
+  }
+
+  #control-panel {
+    z-index: 1;
+    left: 0;
+    top: 70%;
+    width: 100%;
+    height: 30%;
+    overflow-y: auto;
+  }
+
+  #message-panel {
+    z-index: 2;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 70%;
+  }
+
+  #message-area-wrapper {
+    margin: 0;
+  }
+
+  #message-area-overlay {
+    border-radius: 0;
+  }
 }
 
 </style>

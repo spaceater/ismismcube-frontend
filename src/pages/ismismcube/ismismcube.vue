@@ -1,6 +1,6 @@
 <template>
   <div id="ismismcube-container">
-    <div id="left_part">
+    <div id="left_part" :class="{ collapsed: isLeftPartClosed }">
       <div id="page_view" title="此网页的总访量">
         <img src="@/assets/page_view_icon.svg" alt="page_view">
         <b>{{ pageView == -1 ? '-' : pageView }}</b>
@@ -111,7 +111,7 @@
       </div>
     </div>
 
-    <div id="right_part">
+    <div id="right_part" :class="{ widened: isLeftPartClosed }">
       <div id="ismism_cube_box" :style="{ transform: `scale(${1 + sizeIndicatorRatio * 1.5})` }">
         <div
           v-for="x in 4"
@@ -182,6 +182,7 @@ const onlineCount = ref(-1)
 const searchText = ref('')
 const sizeIndicatorRatio = ref(0)
 const content = ref('')
+const isLeftPartClosed = ref(false)
 
 // WebSocket连接
 let socket: WebSocket | null = null
@@ -505,21 +506,7 @@ const setOverview = () => {
   window.removeEventListener("mouseup", setOverview)
   window.removeEventListener("mousemove", changeSize)
   window.removeEventListener("mouseup", closeIndicator)
-  const leftPart = document.getElementById('left_part')
-  const rightPart = document.getElementById('right_part')
-  if (leftPart && rightPart) {
-    if (leftPart.classList.contains('left_part_close')) {
-      leftPart.classList.remove("left_part_close")
-      leftPart.classList.add("left_part_open")
-      rightPart.classList.remove("right_part_close")
-      rightPart.classList.add("right_part_open")
-    } else {
-      leftPart.classList.add("left_part_close")
-      leftPart.classList.remove("left_part_open")
-      rightPart.classList.add("right_part_close")
-      rightPart.classList.remove("right_part_open")
-    }
-  }
+  isLeftPartClosed.value = !isLeftPartClosed.value
 }
 
 const changeSize = (event: MouseEvent) => {
@@ -692,24 +679,11 @@ onUnmounted(() => {
   min-height: 40rem;
   background-color: rgb(230, 230, 230);
   box-shadow: -1rem 0 1rem 1rem black;
+  transition: all 1s ease-in-out;
 }
 
-@keyframes left_close {
-  0% { transform: translateX(0) }
-  100% { transform: translateX(-40rem) }
-}
-
-.left_part_close {
-  animation: left_close 1s ease-in-out forwards;
-}
-
-@keyframes left_open {
-  0% { transform: translateX(-40rem) }
-  100% { transform: translateX(0) }
-}
-
-.left_part_open {
-  animation: left_open 1s ease-in-out forwards;
+#left_part.collapsed {
+  left: -40rem;
 }
 
 #page_view {
@@ -1244,24 +1218,12 @@ onUnmounted(() => {
   min-width: 30rem;
   height: 100%;
   overflow: auto;
+  transition: all 1s ease-in-out;
 }
 
-@keyframes right_close {
-  0% { transform: translateX(0);width: calc(100% - 40rem); }
-  100% { transform: translateX(-40rem);width: 100%; }
-}
-
-.right_part_close {
-  animation: right_close 1s ease-in-out forwards;
-}
-
-@keyframes right_open {
-  0% { transform: translateX(-40rem);width: 100%; }
-  100% { transform: translateX(0);width: calc(100% - 40rem); }
-}
-
-.right_part_open {
-  animation: right_open 1s ease-in-out forwards;
+#right_part.widened {
+  left: 0;
+  width: 100%;
 }
 
 #ismism_cube_box {
