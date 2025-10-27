@@ -293,8 +293,9 @@
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted, reactive, computed, nextTick } from 'vue'
 import { useRouter } from 'vue-router'
-import AdaptiveTextarea from '@/components/AdaptiveTextarea.vue'
+import AdaptiveTextarea from '@/components/adaptiveTextarea.vue'
 import { marked } from 'marked'
+import { buildApiUrl } from '../../config/api.ts'
 
 marked.setOptions({
   breaks: true, // 支持换行
@@ -485,10 +486,10 @@ const confirmEditing = async () => {
 
 const scrollToBottom = () => {
   if (!messageAreaRef.value) return
-  animateScroll(messageAreaRef.value, messageAreaRef.value.scrollHeight, 1000, 'down')
+  scrollElement(messageAreaRef.value, messageAreaRef.value.scrollHeight, 1000, 'down')
 }
 
-const animateScroll = (element: HTMLElement, target: number, duration: number, direction: 'down' | 'up', onComplete?: () => void) => {
+const scrollElement = (element: HTMLElement, target: number, duration: number, direction: 'down' | 'up', onComplete?: () => void) => {
   const start = Date.now()
   const animate = () => {
     const elapsed = Date.now() - start
@@ -503,19 +504,18 @@ const animateScroll = (element: HTMLElement, target: number, duration: number, d
     if (progress < 1) {
       requestAnimationFrame(animate)
     } else if (onComplete) {
-      console.log(Date.now()-start, 'ms')
       onComplete()
     }
   }
   requestAnimationFrame(animate)
 }
 
-const autoScrollControlPanel = () => {
+const scrollControlPanel = () => {
   if (!controlPanelRef.value) return
   const element = controlPanelRef.value
   const target = element.scrollHeight
-  animateScroll(element, target, 1000, 'down', () => {
-    animateScroll(element, target, 1000, 'up')
+  scrollElement(element, target, 1000, 'down', () => {
+    scrollElement(element, target, 1000, 'up')
   })
 }
 
@@ -597,7 +597,8 @@ const resetTokenStats = () => {
 
 const connectBroadcastSocket = () => {
   try {
-    broadcastSocket = new WebSocket((window.location.protocol === 'https:' ? 'wss:' : 'ws:') + "//" + window.location.host + "/ws/chat_broadcast")
+    const wsUrl = `${window.location.protocol === 'https:' ? 'wss:' : 'ws:'}//${window.location.host}${buildApiUrl('/ai/chat_broadcast')}`
+    broadcastSocket = new WebSocket(wsUrl)
     broadcastSocket.addEventListener("open", () => {
       console.log("WebSocket连接成功")
       isWebSocketConnected.value = true
@@ -728,7 +729,7 @@ const connectTaskSocket = (websocketId: string) => {
     return
   }
   try {
-    const wsUrl = `${window.location.protocol === 'https:' ? 'wss:' : 'ws:'}//${window.location.host}/ws/chat_task?id=${websocketId}`
+    const wsUrl = `${window.location.protocol === 'https:' ? 'wss:' : 'ws:'}//${window.location.host}${buildApiUrl('/ai/chat_task?id=${websocketId}')}`
     taskSocket = new WebSocket(wsUrl)
     taskSocket.addEventListener("open", () => {
       console.log("任务WebSocket连接成功")
@@ -883,7 +884,7 @@ const callAI = async () => {
     taskReconnectTimer = null
   }
   try {
-    const response = await fetch('/api/send_chat', {
+    const response = await fetch(buildApiUrl('/ai/send_chat'), {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json'
@@ -930,7 +931,7 @@ const callAI = async () => {
 
 const fetchExecutedTaskCount = async () => {
   try {
-    const response = await fetch('/api/executed_task')
+    const response = await fetch(buildApiUrl('/ai/executed_task'))
     if (!response.ok) {
       throw new Error(`HTTP ${response.status}: ${response.statusText}`)
     }
@@ -948,7 +949,9 @@ onMounted(() => {
   document.title = 'AI-VMZ对话体验'
   connectBroadcastSocket()
   fetchExecutedTaskCount()
-  autoScrollControlPanel()
+  setTimeout(() => {
+    scrollControlPanel()
+  }, 500)
 })
 
 onUnmounted(() => {
@@ -1421,19 +1424,6 @@ onUnmounted(() => {
   flex-direction: column;
   gap: 1rem;
   background-color: rgb(250, 250, 250);
-  scrollbar-color: rgba(128, 128, 128, 0.5) transparent;
-}
-
-#message-area::-webkit-scrollbar {
-  background: transparent;
-}
-
-#message-area::-webkit-scrollbar-thumb {
-  background: rgba(128, 128, 128, 0.5);
-}
-
-#message-area::-webkit-scrollbar-thumb:hover {
-  background: rgba(128, 128, 128, 0.7);
 }
 
 .message {
@@ -1485,7 +1475,7 @@ onUnmounted(() => {
   font-size: 0.9em;
   font-style: italic;
   padding: 0.2em 0.3em;
-  background-color: rgba(128, 128, 128, 0.1);
+  background-color: rgba(128, 128, 128, 0.2);
   border-left: 0.3em solid rgba(128, 128, 128, 0.5);
   border-radius: 0.3em;
 }

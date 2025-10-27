@@ -2,7 +2,7 @@ import { defineConfig } from 'vite'
 import vue from '@vitejs/plugin-vue'
 import { resolve } from 'path'
 
-export default defineConfig({
+export default defineConfig(({ command }) => ({
   plugins: [vue()],
   resolve: {
     alias: {
@@ -15,39 +15,32 @@ export default defineConfig({
     proxy: {
       '/api': {
         target: 'http://127.0.0.1:2998',
+        ws: true,
         changeOrigin: true,
         secure: false,
-        timeout: 10000,
-        proxyTimeout: 10000,
+        rewrite: (path) => path.replace(/^\/api/, ''),
         configure: (proxy) => {
           proxy.on('error', (err) => {
             console.log('API proxy error:', err);
           });
         }
       },
-      '/ws': {
-        target: 'ws://127.0.0.1:2998',
-        ws: true,
+      '/static': {
+        target: 'http://127.0.0.1:2999',
         changeOrigin: true,
         secure: false,
-        timeout: 10000,
-        proxyTimeout: 10000,
+        rewrite: (path) => path.replace(/^\/static/, ''),
         configure: (proxy) => {
           proxy.on('error', (err) => {
-            console.log('WebSocket proxy error:', err);
-          });
-          proxy.on('proxyReqWs', (_proxyReq, _req, socket) => {
-            socket.on('error', (err) => {
-              console.log('WebSocket socket error:', err);
-            });
+            console.log('Static proxy error:', err);
           });
         }
-      }
+      },
     }
   },
   build: {
-    outDir: 'frontend',
-    assetsDir: 'assets',
+    outDir: 'ismismcube',
+    assetsDir: '',
     sourcemap: false,
     rollupOptions: {
       output: {
@@ -57,5 +50,5 @@ export default defineConfig({
       }
     }
   },
-  base: '/'
-})
+  base: command === 'build' ? '/static/ismismcube/' : '/'
+}))

@@ -172,6 +172,8 @@
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
+import { buildStaticUrl } from '../../config/static.ts'
+import { buildApiUrl } from '../../config/api.ts'
 
 // 响应式数据
 const ismData = ref<any>(null)
@@ -196,7 +198,8 @@ const router = useRouter()
 const connectWebSocket = () => {
   try {
     // 根据当前页面协议自动选择 WebSocket 协议
-    socket = new WebSocket((window.location.protocol === 'https:' ? 'wss:' : 'ws:') + "//" + window.location.host + "/ws/ismismcube_online")
+    const wsUrl = `${window.location.protocol === 'https:' ? 'wss:' : 'ws:'}//${window.location.host}${buildApiUrl('/ismismcube/online')}`
+    socket = new WebSocket(wsUrl)
     socket.addEventListener("open", () => {
       console.log("WebSocket连接成功")
       if (reconnectTimer) {
@@ -281,7 +284,7 @@ const getIsmNameFontSize = (text: string) => {
 // 总初始化
 const initial = async () => {
   try {
-    const response = await fetch('/ism.json')
+    const response = await fetch(buildStaticUrl('/ism.json'))
     if (response.ok) {
       ismData.value = await response.json()
       handleRoute()
@@ -294,7 +297,7 @@ const initial = async () => {
   }
 
   try {
-    const response = await fetch('/api/page_view')
+    const response = await fetch(buildApiUrl('/ismismcube/page_view'))
     if (response.ok) {
       const data = await response.json()
       pageView.value = data.page_view
@@ -1090,19 +1093,6 @@ onUnmounted(() => {
   background-color: rgb(200, 200, 200);
   border-radius: 1rem;
   overflow: auto;
-  scrollbar-color: rgba(128, 128, 128, 0.5) transparent;
-}
-
-#ism_info::-webkit-scrollbar {
-  background: transparent;
-}
-
-#ism_info::-webkit-scrollbar-thumb {
-  background: rgba(128, 128, 128, 0.5);
-}
-
-#ism_info::-webkit-scrollbar-thumb:hover {
-  background: rgba(128, 128, 128, 0.7);
 }
 
 #increase_fontsize_button {

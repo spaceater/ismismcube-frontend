@@ -34,3 +34,19 @@ a {
 a:hover {
   color: #3366cc;
 }
+
+* {
+  scrollbar-color: rgba(128, 128, 128, 0.5) transparent;
+}
+
+*::-webkit-scrollbar {
+  background: transparent;
+}
+
+*::-webkit-scrollbar-thumb {
+  background: rgba(128, 128, 128, 0.5);
+}
+
+*::-webkit-scrollbar-thumb:hover {
+  background: rgba(128, 128, 128, 0.7);
+}
