@@ -2,14 +2,6 @@
   <div id="ai-container">
     <div id="main-container">
       <div id="control-panel" :class="{ collapsed: isControlPanelClosed }" ref="controlPanelRef">
-        <div id="control-panel-toggle" @click="toggleControlPanel" :class="{ collapsed: isControlPanelClosed }">
-          <svg v-if="!isControlPanelClosed" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <path d="M15 18L9 12L15 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-          </svg>
-          <svg v-else viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <path d="M9 18L15 12L9 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-          </svg>
-        </div>
         <div id="button-area">
           <div id="ismismcube-button" @click="goIsmismcube">返回主页</div>
           <div id="return-button" @click="openMoreContent">更多内容</div>
@@ -108,6 +100,14 @@
           <div><a href='https://b23.tv/JACBxVp' target='_blank'>https://b23.tv/JACBxVp</a></div>
           <div><a href='https://github.com/spaceater/ismismcube-frontend' target='_blank'>此网页的Github仓库</a></div>
         </div>
+      </div>
+      <div id="control-panel-toggle" @click="toggleControlPanel" :class="{ collapsed: isControlPanelClosed }">
+        <svg v-if="!isControlPanelClosed" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M15 18L9 12L15 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+        <svg v-else viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M9 18L15 12L9 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
       </div>
       <div id="message-panel" :class="{ widened: isControlPanelClosed }">
         <div id="message-area-wrapper">
@@ -1019,45 +1019,13 @@ onUnmounted(() => {
   width: 15rem;
   height: 100%;
   background-color: rgb(230, 230, 230);
-  box-shadow: -1.5rem 0 1rem 1rem black;
+  box-shadow: 0 0 3px 3px rgba(0, 0, 0, 0.2);
   transition: all 1s ease-in-out;
   overflow-y: auto;
 }
 
 #control-panel.collapsed {
   left: -15rem;
-}
-
-#control-panel-toggle {
-  position: fixed;
-  top: 2rem;
-  left: 19rem;
-  width: 1.5rem;
-  height: 1.5rem;
-  background-color: rgb(230, 230, 230);
-  border-radius: 0 0.5rem 0.5rem 0;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: left 1s ease-in-out;
-  box-shadow: 0.1rem 0.1rem 0.1rem rgba(0, 0, 0, 0.3);
-}
-
-#control-panel-toggle.collapsed {
-  left: 4rem;
-}
-
-#control-panel-toggle:hover {
-  background-color:rgb(200, 200, 200);
-  width: calc(1.5rem + 3px);
-}
-
-#control-panel-toggle svg {
-  width: 1rem;
-  height: 1rem;
-  color: black;
-  stroke: black;
 }
 
 #button-area {
@@ -1331,6 +1299,39 @@ onUnmounted(() => {
   font-size: 0.8rem;
   text-align: center;
   font-style: italic;
+}
+
+#control-panel-toggle {
+  position: absolute;
+  top: 2rem;
+  left: 15rem;
+  width: 1.5rem;
+  height: 1.5rem;
+  background-color: rgb(230, 230, 230);
+  border-radius: 0 0.5rem 0.5rem 0;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: left 1s ease-in-out;
+  box-shadow: 0.1rem 0.1rem 0.1rem rgba(0, 0, 0, 0.3);
+  z-index: 3;
+}
+
+#control-panel-toggle.collapsed {
+  left: 0;
+}
+
+#control-panel-toggle:hover {
+  background-color:rgb(200, 200, 200);
+  width: calc(1.5rem + 3px);
+}
+
+#control-panel-toggle svg {
+  width: 1rem;
+  height: 1rem;
+  color: black;
+  stroke: black;
 }
 
 #message-panel {
@@ -2003,20 +2004,43 @@ onUnmounted(() => {
   }
 
   #control-panel {
-    z-index: 1;
-    left: 0;
     top: 70%;
     width: 100%;
     height: 30%;
-    overflow-y: auto;
+  }
+
+  #control-panel.collapsed {
+    left: 0;
+    top: 100%;
   }
 
   #message-panel {
-    z-index: 2;
     left: 0;
-    top: 0;
     width: 100%;
     height: 70%;
+  }
+
+  #message-panel.widened {
+    height: 100%;
+  }
+
+  #control-panel-toggle {
+    left: 0.5rem;
+    top: auto;
+    bottom: 30%;
+    transform: rotate(-90deg);
+    transition: bottom 1s ease-in-out;
+    box-shadow: none;
+  }
+
+  #control-panel-toggle.collapsed {
+    left: 0.5rem;
+    bottom: 0;
+  }
+
+  #control-panel-toggle:hover {
+    width: 1.5rem;
+    height: calc(1.5rem + 3px);
   }
 
   #message-area-wrapper {
@@ -2025,6 +2049,17 @@ onUnmounted(() => {
 
   #message-area-overlay {
     border-radius: 0;
+  }
+
+  #input-textarea {
+    margin-left: 1.5rem;
+  }
+}
+
+/* 小视窗优化 */
+@media (max-height: 32rem), (max-width: 58rem) {
+  #ai-container {
+    padding: 0;
   }
 }
 
