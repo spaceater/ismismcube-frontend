@@ -295,19 +295,21 @@ import { ref, onMounted, onUnmounted, reactive, computed, nextTick } from 'vue'
 import { useRouter } from 'vue-router'
 import AdaptiveTextarea from '@/components/adaptiveTextarea.vue'
 import { marked } from 'marked'
-import { buildApiUrl } from '../../config/api.ts'
-
 marked.setOptions({
   breaks: true, // 支持换行
   gfm: true, // GitHub Flavored Markdown
   pedantic: false, // 不使用严格模式
 })
+import { buildApiUrl } from '../../config/api.ts'
+
+const buildAiApiUrl = (path: string): string => {
+  return buildApiUrl(`/ai${path.startsWith('/') ? '' : '/'}${path}`)
+}
 
 interface ServerConfig {
   available_models: string[]
   max_concurrent_tasks: number
 }
-
 interface ChatConfig {
   prompt: string
   content_size: number
@@ -317,33 +319,6 @@ interface ChatConfig {
   frequency_penalty: number
   presence_penalty: number
   repeat_penalty: number
-}
-
-// 将 markdown 转换为 HTML
-const renderMarkdown = (content: string) => {
-  try {
-    // 使用块级HTML元素作为占位符，避免被 marked 包裹在 <p> 标签中
-    const thinkStartPlaceholder = '<div class="think-placeholder-start"></div>'
-    const thinkEndPlaceholder = '<div class="think-placeholder-end"></div>'
-
-    // 替换 <think> 标签为占位符
-    let processedContent = content
-      .replace(/<think>/g, thinkStartPlaceholder)
-      .replace(/<\/think>/g, thinkEndPlaceholder)
-
-    // 使用 marked 处理 markdown
-    let result = marked(processedContent, { async: false }) as string
-
-    // 将占位符替换回 <think> 标签
-    result = result
-      .replace(/<div class="think-placeholder-start"><\/div>/g, '<think>')
-      .replace(/<div class="think-placeholder-end"><\/div>/g, '</think>')
-
-    return result
-  } catch (error) {
-    console.error('Markdown rendering error:', error)
-    return content
-  }
 }
 
 const router = useRouter()
@@ -457,6 +432,32 @@ const saveSettings = () => {
 const startEdit = (index: number) => {
   editingIndex.value = index
   editingContent.value = history.value[index].content
+}
+
+const renderMarkdown = (content: string) => {
+  try {
+    // 使用块级HTML元素作为占位符，避免被 marked 包裹在 <p> 标签中
+    const thinkStartPlaceholder = '<div class="think-placeholder-start"></div>'
+    const thinkEndPlaceholder = '<div class="think-placeholder-end"></div>'
+
+    // 替换 <think> 标签为占位符
+    let processedContent = content
+      .replace(/<think>/g, thinkStartPlaceholder)
+      .replace(/<\/think>/g, thinkEndPlaceholder)
+
+    // 使用 marked 处理 markdown
+    let result = marked(processedContent, { async: false }) as string
+
+    // 将占位符替换回 <think> 标签
+    result = result
+      .replace(/<div class="think-placeholder-start"><\/div>/g, '<think>')
+      .replace(/<div class="think-placeholder-end"><\/div>/g, '</think>')
+
+    return result
+  } catch (error) {
+    console.error('Markdown rendering error:', error)
+    return content
+  }
 }
 
 const selectAndFocus = (vnode: any) => {
@@ -597,7 +598,7 @@ const resetTokenStats = () => {
 
 const connectBroadcastSocket = () => {
   try {
-    const wsUrl = `${window.location.protocol === 'https:' ? 'wss:' : 'ws:'}//${window.location.host}${buildApiUrl('/ai/chat_broadcast')}`
+    const wsUrl = `${window.location.protocol === 'https:' ? 'wss:' : 'ws:'}//${window.location.host}${buildAiApiUrl('/chat_broadcast')}`
     broadcastSocket = new WebSocket(wsUrl)
     broadcastSocket.addEventListener("open", () => {
       console.log("WebSocket连接成功")
@@ -729,7 +730,7 @@ const connectTaskSocket = (websocketId: string) => {
     return
   }
   try {
-    const wsUrl = `${window.location.protocol === 'https:' ? 'wss:' : 'ws:'}//${window.location.host}${buildApiUrl('/ai/chat_task?id=${websocketId}')}`
+    const wsUrl = `${window.location.protocol === 'https:' ? 'wss:' : 'ws:'}//${window.location.host}${buildAiApiUrl(`/chat_task?id=${websocketId}`)}`
     taskSocket = new WebSocket(wsUrl)
     taskSocket.addEventListener("open", () => {
       console.log("任务WebSocket连接成功")
@@ -884,7 +885,7 @@ const callAI = async () => {
     taskReconnectTimer = null
   }
   try {
-    const response = await fetch(buildApiUrl('/ai/send_chat'), {
+    const response = await fetch(buildAiApiUrl('/send_chat'), {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json'
@@ -931,7 +932,7 @@ const callAI = async () => {
 
 const fetchExecutedTaskCount = async () => {
   try {
-    const response = await fetch(buildApiUrl('/ai/executed_task'))
+    const response = await fetch(buildAiApiUrl('/executed_task'))
     if (!response.ok) {
       throw new Error(`HTTP ${response.status}: ${response.statusText}`)
     }
@@ -1303,7 +1304,7 @@ onUnmounted(() => {
 
 #control-panel-toggle {
   position: absolute;
-  top: 2rem;
+  top: 1rem;
   left: 15rem;
   width: 1.5rem;
   height: 1.5rem;

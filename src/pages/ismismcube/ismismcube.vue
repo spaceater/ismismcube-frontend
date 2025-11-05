@@ -175,6 +175,14 @@ import { useRoute, useRouter } from 'vue-router'
 import { buildStaticUrl } from '../../config/static.ts'
 import { buildApiUrl } from '../../config/api.ts'
 
+const buildIsmismcubeStaticUrl = (path: string): string => {
+  return buildStaticUrl(`/ismismcube${path.startsWith('/') ? '' : '/'}${path}`)
+}
+
+const buildIsmismcubeApiUrl = (path: string): string => {
+  return buildApiUrl(`/ismismcube${path.startsWith('/') ? '' : '/'}${path}`)
+}
+
 // 响应式数据
 const ismData = ref<any>(null)
 const axisColor = ["red", "green", "blue", "darkorange"]
@@ -198,7 +206,7 @@ const router = useRouter()
 const connectWebSocket = () => {
   try {
     // 根据当前页面协议自动选择 WebSocket 协议
-    const wsUrl = `${window.location.protocol === 'https:' ? 'wss:' : 'ws:'}//${window.location.host}${buildApiUrl('/ismismcube/online')}`
+    const wsUrl = `${window.location.protocol === 'https:' ? 'wss:' : 'ws:'}//${window.location.host}${buildIsmismcubeApiUrl('/online')}`
     socket = new WebSocket(wsUrl)
     socket.addEventListener("open", () => {
       console.log("WebSocket连接成功")
@@ -284,7 +292,7 @@ const getIsmNameFontSize = (text: string) => {
 // 总初始化
 const initial = async () => {
   try {
-    const response = await fetch(buildStaticUrl('/ism.json'))
+    const response = await fetch(buildIsmismcubeStaticUrl('/ism.json'))
     if (response.ok) {
       ismData.value = await response.json()
       handleRoute()
@@ -297,7 +305,7 @@ const initial = async () => {
   }
 
   try {
-    const response = await fetch(buildApiUrl('/ismismcube/page_view'))
+    const response = await fetch(buildIsmismcubeApiUrl('/page_view'))
     if (response.ok) {
       const data = await response.json()
       pageView.value = data.page_view
