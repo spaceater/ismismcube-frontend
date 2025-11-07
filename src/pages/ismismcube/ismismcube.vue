@@ -541,7 +541,7 @@ const closeIndicator = () => {
 // 监听路由变化
 watch(() => route.params.ismTag, () => {
   handleRoute()
-}, { immediate: true })
+})
 
 // 生命周期
 onMounted(() => {

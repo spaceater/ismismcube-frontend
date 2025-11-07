@@ -1,9 +1,16 @@
 import { defineConfig } from 'vite'
 import vue from '@vitejs/plugin-vue'
+import { vitePrerenderPlugin } from 'vite-prerender-plugin'
 import { resolve } from 'path'
 
 export default defineConfig(({ command }) => ({
-  plugins: [vue()],
+  plugins: [
+    vue(),
+    vitePrerenderPlugin({
+      prerenderScript: resolve(__dirname, 'src/prerender.ts'),
+      renderTarget: '#app'
+    })
+  ],
   resolve: {
     alias: {
       '@': resolve(__dirname, 'src')
@@ -39,7 +46,7 @@ export default defineConfig(({ command }) => ({
     }
   },
   build: {
-    outDir: 'ismismcube',
+    outDir: 'deployment',
     assetsDir: '',
     sourcemap: false,
     rollupOptions: {

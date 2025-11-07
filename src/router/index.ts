@@ -1,8 +1,4 @@
 import { createRouter, createWebHistory } from 'vue-router'
-import ismismcube from '../pages/ismismcube/ismismcube.vue'
-import ai from '../pages/ai/ai.vue'
-import error from '../pages/error/error.vue'
-
 const router = createRouter({
   // history: createWebHistory(import.meta.env.BASE_URL),
   history: createWebHistory('/'),
@@ -10,22 +6,22 @@ const router = createRouter({
     {
       path: '/',
       name: 'home',
-      component: ismismcube
+      component: () => import('../pages/ismismcube/ismismcube.vue')
     },
     {
       path: '/:ismTag([1-4]|[1-4]-[1-4]|[1-4]-[1-4]-[1-4]|[1-4]-[1-4]-[1-4]-[1-4])',
       name: 'ismDetail',
-      component: ismismcube
+      component: () => import('../pages/ismismcube/ismismcube.vue')
     },
     {
       path: '/ai',
       name: 'ai',
-      component: ai
+      component: () => import('../pages/ai/ai.vue')
     },
     {
       path: '/:pathMatch(.*)*',
       name: 'notFound',
-      component: error
+      component: () => import('../pages/error/error.vue')
     }
   ]
 })

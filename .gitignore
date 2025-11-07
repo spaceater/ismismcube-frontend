@@ -9,7 +9,7 @@ lerna-debug.log*
 
 node_modules
 dist
-/ismismcube
+/deployment
 test
 *.local
 *.vbs
