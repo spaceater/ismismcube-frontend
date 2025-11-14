@@ -112,58 +112,90 @@
     </div>
 
     <div id="right_part" :class="{ widened: isLeftPartClosed }">
-      <div id="ismism_cube_box" :style="{ transform: `scale(${1 + sizeIndicatorRatio * 1.5})` }">
-        <div
-          v-for="x in 4"
-          :key="`${x}`"
-          class="ism_x"
-          :style="{ '--x': 4-x }"
-        >
+      <div id="right_part_scroll">
+        <div id="ismism_cube_box" :style="{ transform: `scale(${1 + sizeIndicatorRatio * 1.5})` }">
           <div
-            v-for="y in 4"
-            :key="`${x}-${y}`"
-            class="ism_xy"
+            v-for="x in 4"
+            :key="`${x}`"
+            class="ism_x"
+            :style="{ '--x': 4-x }"
           >
-            <div id="i"></div>
-            <div id="z"></div>
             <div
-              v-for="z in 4"
-              :key="`${x}-${y}-${z}`"
-              class="ism_xyz ism"
-              :style="{ '--z': z }"
-              :ism_tag="`${x}-${y}-${5-z}`"
-              :class="getIsmClass(`${x}-${y}-${5-z}`)"
-              @mouseover="selectISM(`${x}-${y}-${5-z}`)"
-              @mouseout="unselectISM()"
-              @click="pinISM(`${x}-${y}-${5-z}`)"
+              v-for="y in 4"
+              :key="`${x}-${y}`"
+              class="ism_xy"
             >
-              <p
-                class="ism_name"
-                :class="{ no_data: ismData && ismData[`${x}-${y}-${5-z}`] && ismData[`${x}-${y}-${5-z}`].en_name === '' }"
-                :style="{ fontSize: getIsmNameFontSize(getIsmName(`${x}-${y}-${5-z}`)) }">{{ getIsmName(`${x}-${y}-${5-z}`) }}
-              </p>
-              <div id="ism_xyz_label_column">{{ 5-z }}</div>
+              <div id="i"></div>
+              <div id="z"></div>
               <div
-                v-for="i in 4"
-                :key="`${x}-${y}-${5-z}-${i}`"
-                class="ism_xyzi ism"
-                :style="{ '--i': i }"
-                :ism_tag="`${x}-${y}-${5-z}-${5-i}`"
-                :class="getIsmClass(`${x}-${y}-${5-z}-${5-i}`)"
-                @mouseover.stop="selectISM(`${x}-${y}-${5-z}-${5-i}`)"
-                @mouseout.stop="unselectISM()"
-                @click.stop="pinISM(`${x}-${y}-${5-z}-${5-i}`)"
+                v-for="z in 4"
+                :key="`${x}-${y}-${z}`"
+                class="ism_xyz ism"
+                :style="{ '--z': z }"
+                :ism_tag="`${x}-${y}-${5-z}`"
+                :class="getIsmClass(`${x}-${y}-${5-z}`)"
+                @mouseover="selectISM(`${x}-${y}-${5-z}`)"
+                @mouseout="unselectISM()"
+                @click="pinISM(`${x}-${y}-${5-z}`)"
               >
                 <p
                   class="ism_name"
-                  :class="{ no_data: ismData && ismData[`${x}-${y}-${5-z}-${5-i}`] && ismData[`${x}-${y}-${5-z}-${5-i}`].en_name === '' }"
-                  :style="{ fontSize: getIsmNameFontSize(getIsmName(`${x}-${y}-${5-z}-${5-i}`)) }">{{ getIsmName(`${x}-${y}-${5-z}-${5-i}`) }}
+                  :class="{ no_data: ismData && ismData[`${x}-${y}-${5-z}`] && ismData[`${x}-${y}-${5-z}`].en_name === '' }"
+                  :style="{ fontSize: getIsmNameFontSize(getIsmName(`${x}-${y}-${5-z}`)) }">{{ getIsmName(`${x}-${y}-${5-z}`) }}
                 </p>
-                <div id="ism_xyz_label_row">{{ 5-i }}</div>
+                <div id="ism_xyz_label_column">{{ 5-z }}</div>
+                <div
+                  v-for="i in 4"
+                  :key="`${x}-${y}-${5-z}-${i}`"
+                  class="ism_xyzi ism"
+                  :style="{ '--i': i }"
+                  :ism_tag="`${x}-${y}-${5-z}-${5-i}`"
+                  :class="getIsmClass(`${x}-${y}-${5-z}-${5-i}`)"
+                  @mouseover.stop="selectISM(`${x}-${y}-${5-z}-${5-i}`)"
+                  @mouseout.stop="unselectISM()"
+                  @click.stop="pinISM(`${x}-${y}-${5-z}-${5-i}`)"
+                >
+                  <p
+                    class="ism_name"
+                    :class="{ no_data: ismData && ismData[`${x}-${y}-${5-z}-${5-i}`] && ismData[`${x}-${y}-${5-z}-${5-i}`].en_name === '' }"
+                    :style="{ fontSize: getIsmNameFontSize(getIsmName(`${x}-${y}-${5-z}-${5-i}`)) }">{{ getIsmName(`${x}-${y}-${5-z}-${5-i}`) }}
+                  </p>
+                  <div id="ism_xyz_label_row">{{ 5-i }}</div>
+                </div>
               </div>
             </div>
           </div>
         </div>
+        <div id="danmu_overlay" ref="danmuOverlayRef">
+          <div
+            v-for="danmu in activeDanmus"
+            :key="danmu.id"
+            class="danmu_fly"
+            :class="{ disabled: !danmuEnabled }"
+            :style="{
+              top: danmu.top + 'px',
+              animationDuration: danmu.duration + 's'
+            }"
+            @animationend="removeDanmu(danmu.id)"
+          >
+            {{ danmu.text }}
+          </div>
+        </div>
+      </div>
+      <div id="danmu_container" :class="{ disabled: !danmuEnabled }">
+        <div id="danmu_toggle_button"
+          @click="toggleDanmu"
+        >
+          {{ danmuEnabled ? '关闭弹幕' : '开启弹幕' }}
+        </div>
+        <input id="danmu_input"
+          type="text"
+          placeholder="发送弹幕"
+          v-model="danmuText"
+          :disabled="!danmuEnabled"
+          :class="{ disabled: !danmuEnabled }"
+          @keydown.enter="sendDanmu"
+        >
       </div>
     </div>
   </div>
@@ -193,6 +225,16 @@ const searchText = ref('')
 const sizeIndicatorRatio = ref(0)
 const content = ref('')
 const isLeftPartClosed = ref(false)
+const danmuText = ref('')
+const danmuEnabled = ref<boolean>(true)
+const danmuOverlayRef = ref<HTMLElement | null>(null)
+type DanmuItem = {
+  id: number
+  text: string
+  top: number
+  duration: number
+}
+const activeDanmus = ref<DanmuItem[]>([])
 
 // WebSocket连接
 let socket: WebSocket | null = null
@@ -216,7 +258,7 @@ const connectWebSocket = () => {
       }
     })
     socket.addEventListener("message", (event) => {
-      const message = event.data
+      const message = event.data as string
       if (message.startsWith('broadcast')) {
         try {
           const data = JSON.parse(message.substring(message.indexOf('{')))
@@ -225,6 +267,16 @@ const connectWebSocket = () => {
           }
         } catch (error) {
           console.error("WebSocket JSON解析失败:", message, error)
+        }
+      }
+      else if (message.startsWith("danmu")) {
+        try {
+          const data = JSON.parse(message.substring(message.indexOf('{')))
+          if (data.content !== undefined) {
+            spawnDanmu(String(data.content))
+          }
+        } catch (error) {
+          console.error("弹幕消息解析失败:", message, error)
         }
       } else {
         console.error("WebSocket消息解析失败:", message)
@@ -536,6 +588,64 @@ const closeIndicator = () => {
   window.removeEventListener("mouseup", setOverview)
   window.removeEventListener("mousemove", changeSize)
   window.removeEventListener("mouseup", closeIndicator)
+}
+
+const removeDanmu = (id: number) => {
+  activeDanmus.value = activeDanmus.value.filter(danmu => danmu.id !== id)
+}
+
+const spawnDanmu = (text: string) => {
+  const trimmed = text.trim()
+  if (trimmed === '') return
+  if (!danmuOverlayRef.value) return
+  const containerHeight = danmuOverlayRef.value.clientHeight
+  const danmuHeight = 40
+  const deadZoneHeight = 20
+  const maxTop = Math.max(containerHeight - danmuHeight - deadZoneHeight, 0) || 1
+  const top = deadZoneHeight + Math.random() * maxTop
+  const duration = 6 + Math.random() * 2
+  const id = Date.now() + Math.random()
+  const danmuItem: DanmuItem = {
+    id,
+    text: trimmed,
+    top,
+    duration
+  }
+  activeDanmus.value = [...activeDanmus.value, danmuItem]
+}
+
+const toggleDanmu = () => {
+  danmuEnabled.value = !danmuEnabled.value
+}
+
+const sendDanmu = async () => {
+  if (!danmuEnabled.value) return
+  const contentText = danmuText.value.trim()
+  if (contentText === '') {
+    alert('请输入弹幕内容')
+    return
+  }
+  try {
+    const response = await fetch(buildIsmismcubeApiUrl('/send_danmu'), {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ content: contentText })
+    })
+
+    if (response.ok) {
+      console.log('弹幕发送成功')
+      danmuText.value = ''
+    } else {
+      const errorText = await response.text()
+      console.error('Failed to send test danmu:', errorText)
+      alert('发送失败，请重试')
+    }
+  } catch (error) {
+    console.error('Error sending test danmu:', error)
+    alert('发送失败，请检查网络')
+  }
 }
 
 // 监听路由变化
@@ -1088,7 +1198,6 @@ onUnmounted(() => {
   left: 0.5rem;
   right: 0.5rem;
   top: 19.5rem;
-  border-radius: 1rem;
   overflow: hidden;
   height: calc(100% - 20rem);
 }
@@ -1099,7 +1208,6 @@ onUnmounted(() => {
   width: 100%;
   height: 100%;
   background-color: rgb(200, 200, 200);
-  border-radius: 1rem;
   overflow: auto;
 }
 
@@ -1180,7 +1288,6 @@ onUnmounted(() => {
   position: absolute;
   width: 100%;
   height: 100%;
-  border-radius: 1rem;
   box-shadow: inset 0 0 3px 3px gray;
   pointer-events: none;
 }
@@ -1213,15 +1320,24 @@ onUnmounted(() => {
   position: absolute;
   left: 40rem;
   width: calc(100% - 40rem);
-  min-width: 30rem;
+  min-width: 40rem;
+  min-height: 40rem;
   height: 100%;
-  overflow: auto;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
   transition: all 1s ease-in-out;
 }
 
 #right_part.widened {
   left: 0;
   width: 100%;
+}
+
+#right_part_scroll {
+  position: relative;
+  flex: 1;
+  overflow: auto;
 }
 
 #ismism_cube_box {
@@ -1373,4 +1489,94 @@ onUnmounted(() => {
   display: flex;
   align-items: center;
 }
+
+#danmu_overlay {
+  position: sticky;
+  left: 0;
+  right: 0;
+  top: 0;
+  height: 100%;
+  pointer-events: none;
+  overflow: hidden;
+  z-index: 2;
+}
+
+.danmu_fly {
+  position: absolute;
+  padding: 0.2rem 0.75rem;
+  font-size: 0.9rem;
+  vertical-align: middle;
+  white-space: nowrap;
+  border-radius: 0.5rem;
+  background-color: rgba(0, 0, 0, 0.6);
+  color: white;
+  animation-name: danmu-slide;
+  animation-timing-function: linear;
+  animation-fill-mode: forwards;
+  will-change: transform;
+  pointer-events: auto;
+}
+
+.danmu_fly.disabled {
+  visibility: hidden;
+  pointer-events: none;
+}
+
+.danmu_fly:hover {
+  animation-play-state: paused;
+}
+
+@keyframes danmu-slide {
+  from {
+    left: 100%;
+    transform: translateX(0%);
+  }
+  to {
+    left: 0%;
+    transform: translateX(-100%);
+  }
+}
+
+#danmu_container {
+  position: relative;
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+  padding: 0.5rem 2rem;
+  background-color: rgb(230, 230, 230);
+  box-shadow: 0 0.5rem 0.5rem 0.5rem black;
+}
+
+#danmu_toggle_button {
+  width: 4rem;
+  height: 1.5rem;
+  line-height: 1.5rem;
+  text-align: center;
+  font-size: 0.8rem;
+  background-color: rgb(200, 200, 200);
+  border: 1px solid black;
+  cursor: pointer;
+  user-select: none;
+  transition: background-color 0.2s ease;
+}
+
+#danmu_toggle_button:hover {
+  background-color: gray;
+}
+
+#danmu_input {
+  flex: 1;
+  height: 1.5rem;
+  border: 1px solid black;
+  padding: 0 0.5rem;
+  font-size: 0.8rem;
+  background-color: white;
+  box-sizing: border-box;
+}
+
+#danmu_input.disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
 </style>

@@ -547,6 +547,10 @@ const saveChat = () => {
     alert('没有对话记录可以保存')
     return
   }
+  if (taskStatus.value !== 'none') {
+    alert('当前对话正在生成中，无法保存对话记录')
+    return
+  }
   const now = new Date()
   const firstUserMessage = history.value.find(msg => msg.role === 'user')
   let filename = 'chat.txt'

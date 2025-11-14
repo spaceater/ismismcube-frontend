@@ -18,10 +18,10 @@ export default defineConfig(({ command }) => ({
   },
   server: {
     host: '0.0.0.0',
-    port: 2999,
+    port: 2000,
     proxy: {
       '/api': {
-        target: 'http://127.0.0.1:2998',
+        target: 'http://127.0.0.1:1998',
         ws: true,
         changeOrigin: true,
         secure: false,
@@ -33,7 +33,7 @@ export default defineConfig(({ command }) => ({
         }
       },
       '/static': {
-        target: 'http://127.0.0.1:2999',
+        target: 'http://127.0.0.1:1999',
         changeOrigin: true,
         secure: false,
         rewrite: (path) => path.replace(/^\/static/, ''),
