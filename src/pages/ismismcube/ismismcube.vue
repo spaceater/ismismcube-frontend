@@ -182,7 +182,7 @@
           </div>
         </div>
       </div>
-      <div id="danmu_container" :class="{ disabled: !danmuEnabled }">
+      <div id="danmu_button_container" :class="{ disabled: !danmuEnabled }">
         <div id="danmu_toggle_button"
           @click="toggleDanmu"
         >
@@ -1508,7 +1508,8 @@ onUnmounted(() => {
   vertical-align: middle;
   white-space: nowrap;
   border-radius: 0.5rem;
-  background-color: rgba(0, 0, 0, 0.6);
+  background-color: black;
+  opacity: 0.6;
   color: white;
   animation-name: danmu-slide;
   animation-timing-function: linear;
@@ -1537,7 +1538,7 @@ onUnmounted(() => {
   }
 }
 
-#danmu_container {
+#danmu_button_container {
   position: relative;
   display: flex;
   gap: 0.5rem;
