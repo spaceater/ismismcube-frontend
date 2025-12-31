@@ -226,7 +226,7 @@ const sizeIndicatorRatio = ref(0)
 const content = ref('')
 const isLeftPartClosed = ref(false)
 const danmuText = ref('')
-const danmuEnabled = ref<boolean>(true)
+const danmuEnabled = ref<boolean>(false)
 const danmuOverlayRef = ref<HTMLElement | null>(null)
 type DanmuItem = {
   id: number
@@ -1525,6 +1525,7 @@ onUnmounted(() => {
 
 .danmu_fly:hover {
   animation-play-state: paused;
+  opacity: 0.9;
 }
 
 @keyframes danmu-slide {
