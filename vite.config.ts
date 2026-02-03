@@ -33,7 +33,8 @@ export default defineConfig(({ command }) => ({
         }
       },
       '/static': {
-        target: 'http://127.0.0.1:1999',
+        // target: 'http://127.0.0.1:1999',
+        target: 'http://127.0.0.1:2000',
         changeOrigin: true,
         secure: false,
         rewrite: (path) => path.replace(/^\/static/, ''),
