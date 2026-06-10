@@ -32,12 +32,14 @@ export default defineConfig(({ command }) => ({
           });
         }
       },
-      '/static': {
-        // target: 'http://127.0.0.1:1999',
-        target: 'http://127.0.0.1:2000',
+      '/static/ismismcube': {
+        // 以下两行注释用来快速测试
+        // target: 'http://127.0.0.1:2000',
+        // rewrite: (path) => path.replace(/^\/static\/ismismcube/, ''),
+        target: 'http://127.0.0.1:1999',
+        rewrite: (path) => path.replace(/^\/static/, ''),
         changeOrigin: true,
         secure: false,
-        rewrite: (path) => path.replace(/^\/static/, ''),
         configure: (proxy) => {
           proxy.on('error', (err) => {
             console.log('Static proxy error:', err);
@@ -47,7 +49,7 @@ export default defineConfig(({ command }) => ({
     }
   },
   build: {
-    outDir: 'deployment',
+    outDir: 'build',
     assetsDir: '',
     sourcemap: false,
     rollupOptions: {
