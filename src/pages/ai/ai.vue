@@ -55,7 +55,7 @@
               <div>可用模型:</div>
               <div id="models-list">
                 <template v-if="serverConfig.available_models.length == 0">
-                  <div class="model-item">-</div>
+                  <div class="model-item">无可用模型</div>
                 </template>
                 <template v-else>
                   <div v-for="model in serverConfig.available_models"

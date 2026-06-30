@@ -43,7 +43,7 @@
             >
               <p
                 class="ism_name"
-                :class="{ no_data: ismData && ismData[`${5-x}-${y}`] && ismData[`${5-x}-${y}`].en_name === '' }"
+                :class="{ no_data: ismData && ismData[`${5-x}-${y}`] && !ismData[`${5-x}-${y}`].summary_status }"
                 :style="{ fontSize: getIsmNameFontSize(getIsmName(`${5-x}-${y}`)) }">{{ getIsmName(`${5-x}-${y}`) }}
               </p>
             </div>
@@ -78,7 +78,7 @@
           >
             <p
               class="ism_name"
-              :class="{ no_data: ismData && ismData[`${5-i}`] && ismData[`${5-i}`].en_name === '' }"
+              :class="{ no_data: ismData && ismData[`${5-i}`] && !ismData[`${5-i}`].summary_status }"
               :style="{ fontSize: getIsmNameFontSize(getIsmName(`${5-i}`)) }">{{ getIsmName(`${5-i}`) }}
             </p>
           </div>
@@ -140,7 +140,7 @@
               >
                 <p
                   class="ism_name"
-                  :class="{ no_data: ismData && ismData[`${x}-${y}-${5-z}`] && ismData[`${x}-${y}-${5-z}`].en_name === '' }"
+                  :class="{ no_data: ismData && ismData[`${x}-${y}-${5-z}`] && !ismData[`${x}-${y}-${5-z}`].summary_status }"
                   :style="{ fontSize: getIsmNameFontSize(getIsmName(`${x}-${y}-${5-z}`)) }">{{ getIsmName(`${x}-${y}-${5-z}`) }}
                 </p>
                 <div id="ism_xyz_label_column">{{ 5-z }}</div>
@@ -157,7 +157,7 @@
                 >
                   <p
                     class="ism_name"
-                    :class="{ no_data: ismData && ismData[`${x}-${y}-${5-z}-${5-i}`] && ismData[`${x}-${y}-${5-z}-${5-i}`].en_name === '' }"
+                    :class="{ no_data: ismData && ismData[`${x}-${y}-${5-z}-${5-i}`] && !ismData[`${x}-${y}-${5-z}-${5-i}`].summary_status }"
                     :style="{ fontSize: getIsmNameFontSize(getIsmName(`${x}-${y}-${5-z}-${5-i}`)) }">{{ getIsmName(`${x}-${y}-${5-z}-${5-i}`) }}
                   </p>
                   <div id="ism_xyz_label_row">{{ 5-i }}</div>
@@ -422,6 +422,9 @@ const setISMInfo = (ismTag: string) => {
   }
   if (ismTag.length >= 7) {
     contentHtml += `-<p style='display: inline-block;width:${ismTagfontSize}rem;height:${ismTagfontSize}rem;line-height:${ismTagfontSize}rem;color:darkorange;border:solid black ${ismTagfontSize/10}rem;'><b>${ismTag[6]}</b></p>`
+  }
+  if (ismTagData.summary_status === 'ai') {
+    contentHtml += `\n<i style='color: red;'>--- 注意: 以下内容由 AI 总结 ---</i>`
   }
   contentHtml += `\n<b>${ismTagData.ch_name}\n${ismTagData.en_name}</b></div>`
   const axisListData = ismTagData.axis_list
