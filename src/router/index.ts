@@ -1,29 +1,16 @@
 import { createRouter, createWebHistory } from 'vue-router'
+import { resolvedRoutes } from '../routes'
+
 const router = createRouter({
-  // history: createWebHistory(import.meta.env.BASE_URL),
   history: createWebHistory('/'),
-  routes: [
-    {
-      path: '/',
-      name: 'home',
-      component: () => import('../pages/ismismcube/ismismcube.vue')
-    },
-    {
-      path: '/:ismTag([1-4]|[1-4]-[1-4]|[1-4]-[1-4]-[1-4]|[1-4]-[1-4]-[1-4]-[1-4])',
-      name: 'ismDetail',
-      component: () => import('../pages/ismismcube/ismismcube.vue')
-    },
-    {
-      path: '/ai',
-      name: 'ai',
-      component: () => import('../pages/ai/ai.vue')
-    },
-    {
-      path: '/:pathMatch(.*)*',
-      name: 'notFound',
-      component: () => import('../pages/error/error.vue')
-    }
-  ]
+  routes: resolvedRoutes
+})
+
+router.afterEach((to) => {
+  const title = to.meta.title
+  if (typeof title === 'string') {
+    document.title = title
+  }
 })
 
 export default router

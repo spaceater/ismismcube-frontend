@@ -949,7 +949,6 @@ const fetchExecutedTaskCount = async () => {
 }
 
 onMounted(() => {
-  document.title = 'AI-VMZ对话体验'
   connectBroadcastSocket()
   fetchExecutedTaskCount()
   setTimeout(() => {

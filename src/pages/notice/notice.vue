@@ -5,7 +5,6 @@ import { buildApiUrl } from '../../config/api.ts'
 const pageView = ref(-1)
 
 onMounted(async () => {
-  document.title = '主义主义魔方-服务暂停'
   try {
     // 仅读取累计访问数（GET 只读，浏览公告不会新增访问）
     const response = await fetch(buildApiUrl('/ismismcube/page_view'), { method: 'GET' })

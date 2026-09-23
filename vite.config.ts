@@ -8,7 +8,9 @@ export default defineConfig(({ command }) => ({
     vue(),
     vitePrerenderPlugin({
       prerenderScript: resolve(__dirname, 'src/prerender.ts'),
-      renderTarget: '#app'
+      renderTarget: '#app',
+      // 这两个页面也需要预渲染
+      additionalPrerenderRoutes: ['/ai', '/notice']
     })
   ],
   resolve: {
