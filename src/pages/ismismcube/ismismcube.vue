@@ -9,7 +9,7 @@
         <p>在线:</p>
         <b>{{ onlineCount == -1 ? '-' : onlineCount }}</b>
       </div>
-      <div id="ai_button" @click="goToAI">AI 未明子</div>
+      <div id="ai_button" @click="goToAI">AI 对话</div>
       <div id="return_button" @click="openMoreContent">更多内容</div>
       <div id="download_button" @click="downloadIsmJson">下载文件</div>
       <input
@@ -357,7 +357,8 @@ const initial = async () => {
   }
 
   try {
-    const response = await fetch(buildIsmismcubeApiUrl('/page_view'))
+    // POST 记录本次访问，并返回包含本次访问后的总数（保持原先每次加载计一次访问的行为）
+    const response = await fetch(buildIsmismcubeApiUrl('/page_view'), { method: 'POST' })
     if (response.ok) {
       const data = await response.json()
       pageView.value = data.page_view
